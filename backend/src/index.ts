@@ -6,6 +6,7 @@ import {PORT} from "./constants";
 import { Request, Response, NextFunction } from 'express';
 import { authRoutes } from './routes/authRoutes';
 import { userRoutes } from './routes/userRoutes';
+import { imageRoutes } from './routes/imageRoutes';
 
 interface AuthenticatedRequest extends Request {
   user?: any;
@@ -24,6 +25,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/images', imageRoutes);
 
 
 connectDB().then(() => {
