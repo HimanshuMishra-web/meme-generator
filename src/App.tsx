@@ -10,6 +10,7 @@ import { AuthProvider } from './components/AuthContext';
 import SignInPage from './Pages/SignInPage';
 import SignUpPage from './Pages/SignUpPage';
 import ForgetPasswordPage from './Pages/ForgetPasswordPage';
+import APIMemesPage from './Pages/APIMemesPage';
 
 function App() {
   return (
@@ -17,11 +18,12 @@ function App() {
       <Router>
         <div className="min-h-screen bg-white text-gray-900">
           <Navbar
-            logo={<span className="text-xl font-bold">🪄 MemeForge</span>}
+            logo={<span className="text-xl font-bold">🦄 MemeForge</span>}
             links={[
               { label: 'Home', to: '/' },
               { label: 'Create', to: '/create' },
               { label: 'Explore', to: '/memes' },
+              { label: 'API Memes', to: '/api-memes' },
               { label: 'Community', href: '#' },
             ]}
             rightContent={<button className="ml-4 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-5 py-2 rounded-full transition">Sign up</button>}
@@ -35,6 +37,7 @@ function App() {
             <Route path="/signin" element={<SignInPage />} />
             <Route path="/signup" element={<SignUpPage />} />
             <Route path="/forgot-password" element={<ForgetPasswordPage />} />
+            <Route path="/api-memes" element={<APIMemesPage />} />
             {/* Future routes can be added here */}
           </Routes>
         </div>

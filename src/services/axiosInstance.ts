@@ -7,7 +7,8 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const token = localStorage.getItem('token');
+  const auth = localStorage.getItem('meme-app-auth');
+  const token = auth ? JSON.parse(auth).token : false;
   if (token && config.headers) {
     config.headers['Authorization'] = `Bearer ${token}`;
   }

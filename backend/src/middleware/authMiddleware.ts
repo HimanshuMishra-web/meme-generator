@@ -22,6 +22,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
       role: decoded.role,
       permissions: decoded.permissions
     };
+    console.log(decoded, "decoded")
     next();
   } catch (err) {
     res.status(401).json({ error: 'Unauthorized: Invalid token' });

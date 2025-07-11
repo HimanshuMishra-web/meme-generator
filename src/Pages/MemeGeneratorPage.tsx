@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useRef, useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import Tabs from '../components/Tabs';
 import PageLayout from '../components/PageLayout';
 import { colors, fonts } from '../data/constants';
@@ -14,6 +14,9 @@ interface MemeText {
   color: string;
   font: string;
   fontSize: number;
+  width: number; // new
+  height: number; // new
+  rotation: number; // new
 }
 
 // Add ImageStyle type
@@ -47,6 +50,20 @@ export default function MemeGeneratorPage() {
   const [aiStyle, setAiStyle] = useState<ImageStyle>('pixel');
   const [aiModel, setAiModel] = useState<ModelType>('dall-e-3');
 
+  // --- Resize/Rotate State ---
+  const [resizeState, setResizeState] = useState<null | { id: number; startX: number; startY: number; startWidth: number; startHeight: number; direction: 'right' | 'bottom' | 'corner'; }> (null);
+  const [rotateState, setRotateState] = useState<null | { id: number; centerX: number; centerY: number; startAngle: number; startRotation: number; }> (null);
+
+  const location = useLocation();
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const template = params.get('template');
+    if (template) {
+      setImage(template);
+      setPreviewUrl(template);
+    }
+  }, [location.search]);
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -78,6 +95,9 @@ export default function MemeGeneratorPage() {
         color: color,
         font: font,
         fontSize: fontSize,
+        width: 200, // default width
+        height: 40, // default height
+        rotation: 0, // default rotation
       },
     ]);
   };
@@ -133,6 +153,75 @@ export default function MemeGeneratorPage() {
     setDraggedId(null);
   };
 
+  // Mouse events for resizing
+  const handleResizeMouseDown = (e: React.MouseEvent, id: number, direction: 'right' | 'bottom' | 'corner') => {
+    e.stopPropagation();
+    const text = memeTexts.find(t => t.id === id);
+    if (!text) return;
+    setResizeState({
+      id,
+      startX: e.clientX,
+      startY: e.clientY,
+      startWidth: text.width,
+      startHeight: text.height,
+      direction,
+    });
+  };
+
+  // Mouse events for rotating
+  const handleRotateMouseDown = (e: React.MouseEvent, id: number) => {
+    e.stopPropagation();
+    const text = memeTexts.find(t => t.id === id);
+    if (!text || !previewRef.current) return;
+    const rect = previewRef.current.getBoundingClientRect();
+    const centerX = rect.left + text.x + text.width / 2;
+    const centerY = rect.top + text.y + text.height / 2;
+    setRotateState({
+      id,
+      centerX,
+      centerY,
+      startAngle: Math.atan2(e.clientY - centerY, e.clientX - centerX),
+      startRotation: text.rotation,
+    });
+  };
+
+  // Mouse move for resize/rotate
+  useEffect(() => {
+    const handleMouseMoveDoc = (e: MouseEvent) => {
+      if (resizeState) {
+        setMemeTexts(memeTexts => memeTexts.map(t => {
+          if (t.id !== resizeState.id) return t;
+          let newWidth = t.width;
+          let newHeight = t.height;
+          if (resizeState.direction === 'right' || resizeState.direction === 'corner') {
+            newWidth = Math.max(40, resizeState.startWidth + (e.clientX - resizeState.startX));
+          }
+          if (resizeState.direction === 'bottom' || resizeState.direction === 'corner') {
+            newHeight = Math.max(20, resizeState.startHeight + (e.clientY - resizeState.startY));
+          }
+          return { ...t, width: newWidth, height: newHeight };
+        }));
+      } else if (rotateState) {
+        const { id, centerX, centerY, startAngle, startRotation } = rotateState;
+        const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+        const deg = ((angle - startAngle) * 180) / Math.PI;
+        setMemeTexts(memeTexts => memeTexts.map(t => t.id === id ? { ...t, rotation: startRotation + deg } : t));
+      }
+    };
+    const handleMouseUpDoc = () => {
+      setResizeState(null);
+      setRotateState(null);
+    };
+    if (resizeState || rotateState) {
+      document.addEventListener('mousemove', handleMouseMoveDoc);
+      document.addEventListener('mouseup', handleMouseUpDoc);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMoveDoc);
+        document.removeEventListener('mouseup', handleMouseUpDoc);
+      };
+    }
+  }, [resizeState, rotateState]);
+
   // Add this function for AI meme generation
   const handleGenerateWithAI = async () => {
     if (!aiPrompt.trim()) {
@@ -141,8 +230,9 @@ export default function MemeGeneratorPage() {
     }
     try {
       const response = await api.post('/images/generate', { prompt: aiPrompt, style: aiStyle, model: aiModel });
-      setImage(response.data.imageUrl);
-      setPreviewUrl(response.data.imageUrl);
+      // Use the correct path to the image URL
+      setImage(response.data.image.url);
+      setPreviewUrl(response.data.image.url);
     } catch (error: any) {
       // Try to extract backend or OpenAI error message
       let message = error.response?.data?.error || error.response?.data?.message || error.message;
@@ -290,32 +380,104 @@ export default function MemeGeneratorPage() {
                           textShadow: '2px 2px 4px rgba(0,0,0,0.7)',
                           zIndex: 2,
                           userSelect: 'none',
+                          width: t.width,
+                          height: t.height,
+                          transform: `rotate(${t.rotation}deg)`
                         }}
                         onMouseDown={e => handleMouseDown(e, t.id)}
                         onClick={e => { e.stopPropagation(); setSelectedTextId(t.id); }}
                       >
+                        {/* Rotate handle */}
+                        <div
+                          style={{
+                            position: 'absolute',
+                            left: '50%',
+                            top: -24,
+                            transform: 'translateX(-50%)',
+                            cursor: 'grab',
+                            zIndex: 3,
+                          }}
+                          onMouseDown={e => handleRotateMouseDown(e, t.id)}
+                        >
+                          <span role="img" aria-label="rotate" style={{ fontSize: 18 }}>⟳</span>
+                        </div>
+                        {/* Text input */}
                         <input
-                          className="bg-transparent border-none outline-none text-center p-0 m-0 w-auto"
+                          className="bg-transparent border-none outline-none text-center p-0 m-0 w-full h-full"
                           style={{
                             color: t.color,
                             fontFamily: t.font,
                             fontSize: t.fontSize,
                             fontWeight: 'bold',
                             textShadow: '2px 2px 4px rgba(0,0,0,0.7)',
-                            maxWidth: 200,
+                            width: '100%',
+                            height: '100%',
                           }}
                           value={t.text}
                           onChange={e => handleTextChange(t.id, e.target.value)}
                           onFocus={() => setSelectedTextId(t.id)}
                         />
+                        {/* Remove button */}
                         <button
                           className="ml-1 text-xs text-red-500 opacity-0 group-hover:opacity-100"
                           onClick={() => handleRemoveText(t.id)}
                           tabIndex={-1}
                           type="button"
+                          style={{ position: 'absolute', top: 2, right: 2, zIndex: 4 }}
                         >
                           ✕
                         </button>
+                        {/* Resize handles */}
+                        {/* Right handle */}
+                        <div
+                          style={{
+                            position: 'absolute',
+                            right: -6,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            width: 12,
+                            height: 12,
+                            background: '#fff',
+                            border: '1px solid #888',
+                            borderRadius: '50%',
+                            cursor: 'ew-resize',
+                            zIndex: 3,
+                          }}
+                          onMouseDown={e => handleResizeMouseDown(e, t.id, 'right')}
+                        />
+                        {/* Bottom handle */}
+                        <div
+                          style={{
+                            position: 'absolute',
+                            left: '50%',
+                            bottom: -6,
+                            transform: 'translateX(-50%)',
+                            width: 12,
+                            height: 12,
+                            background: '#fff',
+                            border: '1px solid #888',
+                            borderRadius: '50%',
+                            cursor: 'ns-resize',
+                            zIndex: 3,
+                          }}
+                          onMouseDown={e => handleResizeMouseDown(e, t.id, 'bottom')}
+                        />
+                        {/* Corner handle */}
+                        <div
+                          style={{
+                            position: 'absolute',
+                            right: -6,
+                            bottom: -6,
+                            width: 12,
+                            height: 12,
+                            background: '#fff',
+                            border: '1px solid #888',
+                            borderRadius: '50%',
+                            cursor: 'nwse-resize',
+                            zIndex: 3,
+                          }}
+                          onMouseDown={e => handleResizeMouseDown(e, t.id, 'corner')}
+                        />
                       </div>
                     ))}
                   </div>
