@@ -39,8 +39,8 @@ const SignInPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-white">
-      <div className="bg-gray-100 p-8 rounded shadow-md w-full max-w-2xl flex flex-col md:flex-row items-center">
+    <div className="flex flex-col items-center justify-center h-[calc(100vh-80px)] bg-white overflow-hidden">
+      <div className="bg-gray-100 p-8 rounded shadow-md w-full max-w-2xl flex flex-col md:flex-row items-center max-h-[85vh] overflow-y-auto">
         <div className="flex justify-center mb-6 md:mb-0 md:mr-8 w-full md:w-1/2">
           <Player
             autoplay

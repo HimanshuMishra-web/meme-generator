@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import Tabs from '../components/Tabs';
 import PageLayout from '../components/PageLayout';
 import { colors, fonts } from '../data/constants';
-import api from '../services/axiosInstance';
+import { apiService } from '../services/axiosInstance';
 
 // Add MemeText type
 interface MemeText {
@@ -229,7 +229,7 @@ export default function MemeGeneratorPage() {
       return;
     }
     try {
-      const response = await api.post('/images/generate', { prompt: aiPrompt, style: aiStyle, model: aiModel });
+      const response = await apiService.post<{ data: { image: { url: string } } }>('/images/generate', { prompt: aiPrompt, style: aiStyle, model: aiModel });
       // Use the correct path to the image URL
       setImage(response.data.image.url);
       setPreviewUrl(response.data.image.url);

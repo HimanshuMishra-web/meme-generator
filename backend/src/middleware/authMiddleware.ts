@@ -9,22 +9,46 @@ interface JwtUserPayload {
 
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
+  console.log('Auth header:', authHeader); // Debug log
+  
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.log('No valid auth header found'); // Debug log
     res.status(401).json({ error: 'Unauthorized: No token provided' });
     return;
   }
 
   const token = authHeader.split(' ')[1];
+  console.log('Token received:', token ? `${token.substring(0, 20)}...` : 'null'); // Debug log
+  
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtUserPayload;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "supersecretkey") as JwtUserPayload;
+    console.log('Token decoded successfully:', decoded); // Debug log
     req.user = {
       id: decoded.id,
       role: decoded.role,
       permissions: decoded.permissions
     };
-    console.log(decoded, "decoded")
     next();
   } catch (err) {
+    console.log('Token verification failed:', err); // Debug log
     res.status(401).json({ error: 'Unauthorized: Invalid token' });
   }
+}
+
+// Super Admin middleware
+export function requireSuperAdmin(req: Request, res: Response, next: NextFunction): void {
+  if (req.user?.role !== 'super_admin') {
+    res.status(403).json({ message: 'Forbidden: Super Admin access required.' });
+    return;
+  }
+  next();
+}
+
+// Admin or Super Admin middleware
+export function requireAdminOrSuperAdmin(req: Request, res: Response, next: NextFunction): void {
+  if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+    res.status(403).json({ message: 'Forbidden: Admin or Super Admin access required.' });
+    return;
+  }
+  next();
 } 

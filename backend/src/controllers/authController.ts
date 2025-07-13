@@ -17,7 +17,7 @@ export const login = async (req: Request, res: Response) => {
     role: user.role,
     permissions: user.permissions,
   };
-  const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" });
+  const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "24h" });
   res.json(success({ message: "Login Successful", data: { user, token } }));
 };
 
@@ -34,7 +34,7 @@ export const signup = async (req: Request, res: Response) => {
       role: user.role,
       permissions: user.permissions,
     };
-    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" });
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "24h" });
     res
       .status(201)
       .json(

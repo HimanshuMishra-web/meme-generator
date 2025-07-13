@@ -1,12 +1,15 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
 import { connectDB } from './config/db';
 import {PORT} from "./constants";
 import { Request, Response, NextFunction } from 'express';
 import { authRoutes } from './routes/authRoutes';
 import { userRoutes } from './routes/userRoutes';
 import { imageRoutes } from './routes/imageRoutes';
+import { permissionRoutes } from './routes/permissionRoutes';
+import mediaRoutes from './routes/mediaRoutes';
 
 interface AuthenticatedRequest extends Request {
   user?: any;
@@ -19,6 +22,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Serve static files from assets directory
+app.use('/assets/media', express.static(path.join(__dirname, '../assets/media')));
+
 app.get('/', (req, res) => {
   res.send('Meme Generator Backend is running!');
 });
@@ -26,7 +32,8 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/images', imageRoutes);
-
+app.use('/api/permissions', permissionRoutes);
+app.use('/api/media', mediaRoutes);
 
 connectDB().then(() => {
   app.listen(PORT, () => {

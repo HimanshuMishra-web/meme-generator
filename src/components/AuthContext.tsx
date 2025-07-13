@@ -16,6 +16,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<boolean>;
   signUp: (username: string, email: string, password: string) => Promise<boolean>;
   signOut: () => void;
+  handleAuthError: (error: any) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -112,8 +113,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     queryClient.clear();
   };
 
+  const handleAuthError = (error: any) => {
+    if (error.response?.status === 401) {
+      signOut();
+      console.error('Unauthorized token error. User logged out.');
+    } else {
+      console.error('An unexpected error occurred:', error);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, token, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, token, signIn, signUp, signOut, handleAuthError }}>
       {children}
     </AuthContext.Provider>
   );
