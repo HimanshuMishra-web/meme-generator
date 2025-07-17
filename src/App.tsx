@@ -12,6 +12,7 @@ import SignUpPage from './Pages/SignUpPage';
 import ForgetPasswordPage from './Pages/ForgetPasswordPage';
 import APIMemesPage from './Pages/APIMemesPage';
 import AdminDashboard from './Pages/admin';
+import { Toaster } from 'react-hot-toast';
 
 const AppContent: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
@@ -60,6 +61,7 @@ const App: React.FC = () => {
   return (
     <AuthProvider>
       <Router>
+        <Toaster position="top-center" />
         <AppContent />
       </Router>
     </AuthProvider>

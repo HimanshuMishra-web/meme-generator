@@ -4,6 +4,12 @@ import Tabs from '../components/Tabs';
 import PageLayout from '../components/PageLayout';
 import { colors, fonts } from '../data/constants';
 import { apiService } from '../services/axiosInstance';
+import Lottie from "lottie-react";
+import loaderLottie from "../assets/loader-lottie.json";
+import { API_URL, ASSETS_URL } from '../../constants';
+import MemeTextOverlay from '../components/MemeTextOverlay';
+import { useAuth } from '../components/AuthContext';
+import { toast } from 'react-hot-toast';
 
 // Add MemeText type
 interface MemeText {
@@ -39,16 +45,19 @@ export default function MemeGeneratorPage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Add tab state
-  const [activeTab, setActiveTab] = useState<'From Template' | 'AI Generator'>('From Template');
+  const [activeTab, setActiveTab] = useState<'Upload / Template' | 'AI Generator'>('Upload / Template');
 
   // Draggable meme texts state
   const [memeTexts, setMemeTexts] = useState<MemeText[]>([]);
   const [draggedId, setDraggedId] = useState<number | null>(null);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const previewRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null); // Add canvas ref
   const [selectedTextId, setSelectedTextId] = useState<number | null>(null);
   const [aiStyle, setAiStyle] = useState<ImageStyle>('pixel');
   const [aiModel, setAiModel] = useState<ModelType>('dall-e-3');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [aiImageMeta, setAiImageMeta] = useState<any>(null); // for new response
 
   // --- Resize/Rotate State ---
   const [resizeState, setResizeState] = useState<null | { id: number; startX: number; startY: number; startWidth: number; startHeight: number; direction: 'right' | 'bottom' | 'corner'; }> (null);
@@ -225,21 +234,125 @@ export default function MemeGeneratorPage() {
   // Add this function for AI meme generation
   const handleGenerateWithAI = async () => {
     if (!aiPrompt.trim()) {
-      alert('Prompt is required');
+      toast.error('Prompt is required');
       return;
     }
+    setIsGenerating(true);
+    setAiImageMeta(null);
     try {
-      const response = await apiService.post<{ data: { image: { url: string } } }>('/images/generate', { prompt: aiPrompt, style: aiStyle, model: aiModel });
-      // Use the correct path to the image URL
-      setImage(response.data.image.url);
-      setPreviewUrl(response.data.image.url);
+      const response = await apiService.post<{ image: any }>(
+        '/images/generate',
+        { prompt: aiPrompt, style: aiStyle, model: aiModel }
+      );
+      // Use the new response format
+      setImage(response.image.url);
+      setPreviewUrl(response.image.url);
+      setAiImageMeta(response.image);
     } catch (error: any) {
-      // Try to extract backend or OpenAI error message
       let message = error.response?.data?.error || error.response?.data?.message || error.message;
       if (typeof message === 'object') {
         message = JSON.stringify(message);
       }
-      alert('Error generating meme: ' + message);
+      toast.error('Error generating meme: ' + message);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const { isAuthenticated, user } = useAuth();
+
+  // Render meme (image + overlays) to canvas
+  const renderToCanvas = async () => {
+    if (!image || !canvasRef.current || !previewRef.current) return null;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    // Get preview size
+    const previewRect = previewRef.current.getBoundingClientRect();
+    canvas.width = previewRect.width;
+    canvas.height = previewRect.height;
+    // Draw base image
+    let img = new window.Image();
+    img.crossOrigin = 'anonymous';
+    // Handle local blob/data URLs and remote URLs
+    img.src = image && (/^(blob:|data:)/.test(image) ? image : (!/^https?:\/\//.test(image) ? `${ASSETS_URL.replace(/\/$/, '')}/${image.replace(/^\//, '')}` : image));
+    await new Promise(resolve => { img.onload = resolve; });
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    // Draw overlays
+    memeTexts.forEach(t => {
+      ctx.save();
+      ctx.translate(t.x + t.width / 2, t.y + t.height / 2);
+      ctx.rotate((t.rotation * Math.PI) / 180);
+      ctx.font = `${t.fontSize}px ${t.font}`;
+      ctx.fillStyle = t.color;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      // Multi-line support
+      const lines = t.text.split('\n');
+      const lineHeight = t.fontSize * 1.2;
+      lines.forEach((line, i) => {
+        ctx.fillText(line, 0, (i - (lines.length - 1) / 2) * lineHeight);
+      });
+      ctx.restore();
+    });
+    return canvas;
+  };
+
+  // Save to collection handler (canvas)
+  const handleSaveToCollection = async () => {
+    const canvas = await renderToCanvas();
+    if (!canvas) return;
+    canvas.toBlob(async blob => {
+      if (!blob) return;
+      const formData = new FormData();
+      formData.append('image', blob, 'meme.png');
+      // Optionally add metadata (e.g., overlays, prompt, style, etc.)
+      formData.append('overlays', JSON.stringify(memeTexts));
+      if (aiImageMeta?.prompt) formData.append('prompt', aiImageMeta.prompt);
+      if (aiImageMeta?.style) formData.append('style', aiImageMeta.style);
+      if (aiImageMeta?.modelUsed) formData.append('modelUsed', aiImageMeta.modelUsed);
+      try {
+        await apiService.post('/images/save-to-collection', formData);
+        toast.success('Saved to your collection!');
+      } catch (err: any) {
+        toast.error(err?.response?.data?.error || err.message || 'Failed to save');
+      }
+    }, 'image/png');
+  };
+
+  // Download handler (canvas)
+  const handleDownload = async () => {
+    const canvas = await renderToCanvas();
+    if (!canvas) return;
+    const url = canvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'meme.png';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Social share handler (canvas)
+  const handleShare = async (platform: string) => {
+    const canvas = await renderToCanvas();
+    if (!canvas) return;
+    const url = canvas.toDataURL('image/png');
+    // For now, upload to backend or use Web Share API if available
+    if (navigator.share) {
+      canvas.toBlob(blob => {
+        if (!blob) return;
+        const file = new File([blob], 'meme.png', { type: 'image/png' });
+        navigator.share({
+          files: [file],
+          title: 'Check out this meme I made!',
+          text: 'Check out this meme I made!'
+        });
+      }, 'image/png');
+    } else {
+      // Fallback: open image in new tab
+      window.open(url, '_blank');
     }
   };
 
@@ -247,10 +360,11 @@ export default function MemeGeneratorPage() {
     <div className="min-h-screen bg-white text-gray-900">
       <PageLayout className="max-w-3xl">
         <h1 className="text-2xl font-bold mb-2">Create a Meme</h1>
+        <div className="mb-2 text-gray-600 text-sm">Upload an image, select a template, or generate with AI. Add text, then save, share, or download your meme!</div>
         <Tabs
-          tabs={['From Template', 'AI Generator']}
+          tabs={['Upload / Template', 'AI Generator']}
           activeTab={activeTab}
-          onTabChange={tab => setActiveTab(tab as 'From Template' | 'AI Generator')}
+          onTabChange={tab => setActiveTab(tab as 'Upload / Template' | 'AI Generator')}
           className="mb-8"
         />
         {/* Responsive flex container for form and preview */}
@@ -258,7 +372,7 @@ export default function MemeGeneratorPage() {
           {/* Generate/Form Section */}
           <div className="w-full md:w-1/2">
             {/* Tab Content */}
-            {activeTab === 'From Template' && (
+            {activeTab === 'Upload / Template' && (
               <>
                 {/* 1. Choose a Template */}
                 <section className="mb-8">
@@ -302,7 +416,7 @@ export default function MemeGeneratorPage() {
                   placeholder="AI Prompt"
                   value={aiPrompt}
                   onChange={e => setAiPrompt(e.target.value)}
-                  rows={2}
+                  rows={6}
                 />
                 {/* Image Style Select */}
                 <div className="mb-2">
@@ -332,7 +446,9 @@ export default function MemeGeneratorPage() {
                     ))}
                   </select>
                 </div>
-                <button className="bg-black text-white px-4 py-2 rounded font-semibold hover:bg-gray-800" onClick={handleGenerateWithAI}>Generate with AI</button>
+                <button className="bg-black text-white px-4 py-2 rounded font-semibold hover:bg-gray-800" onClick={handleGenerateWithAI} disabled={isGenerating}>
+                  {isGenerating ? 'Generating...' : 'Generate with AI'}
+                </button>
               </section>
             )}
           </div>
@@ -355,184 +471,76 @@ export default function MemeGeneratorPage() {
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
+                onClick={() => setSelectedTextId(null)}
                 style={{ userSelect: draggedId !== null ? 'none' : undefined }}
               >
-                {image ? (
+                {isGenerating ? (
+                  <div className="flex flex-col items-center justify-center w-full h-full">
+                    <Lottie animationData={loaderLottie} loop={true} style={{ width: 180, height: 180 }} />
+                    <span className="mt-2 text-base font-semibold text-gray-600">Generating a meme... Hold tight!</span>
+                  </div>
+                ) : image ? (
                   <div className="w-full h-full flex items-center justify-center relative" style={{ maxHeight: '24rem', maxWidth: '100%' }}>
                     <img
-                      src={image}
+                      src={image && (/^(blob:|data:)/.test(image) ? image : (!/^https?:\/\//.test(image) ? `${ASSETS_URL.replace(/\/$/, '')}/${image.replace(/^\//, '')}` : image))}
                       alt="Preview"
                       className="object-contain w-full h-full absolute top-0 left-0"
                       style={{ zIndex: 1 }}
                     />
                     {/* Draggable Text Overlays */}
                     {memeTexts.map(t => (
-                      <div
+                      <MemeTextOverlay
                         key={t.id}
-                        className="absolute cursor-move group"
-                        style={{
-                          left: t.x,
-                          top: t.y,
-                          color: t.color,
-                          fontFamily: t.font,
-                          fontSize: t.fontSize,
-                          fontWeight: 'bold',
-                          textShadow: '2px 2px 4px rgba(0,0,0,0.7)',
-                          zIndex: 2,
-                          userSelect: 'none',
-                          width: t.width,
-                          height: t.height,
-                          transform: `rotate(${t.rotation}deg)`
-                        }}
-                        onMouseDown={e => handleMouseDown(e, t.id)}
-                        onClick={e => { e.stopPropagation(); setSelectedTextId(t.id); }}
-                      >
-                        {/* Rotate handle */}
-                        <div
-                          style={{
-                            position: 'absolute',
-                            left: '50%',
-                            top: -24,
-                            transform: 'translateX(-50%)',
-                            cursor: 'grab',
-                            zIndex: 3,
-                          }}
-                          onMouseDown={e => handleRotateMouseDown(e, t.id)}
-                        >
-                          <span role="img" aria-label="rotate" style={{ fontSize: 18 }}>⟳</span>
-                        </div>
-                        {/* Text input */}
-                        <input
-                          className="bg-transparent border-none outline-none text-center p-0 m-0 w-full h-full"
-                          style={{
-                            color: t.color,
-                            fontFamily: t.font,
-                            fontSize: t.fontSize,
-                            fontWeight: 'bold',
-                            textShadow: '2px 2px 4px rgba(0,0,0,0.7)',
-                            width: '100%',
-                            height: '100%',
-                          }}
-                          value={t.text}
-                          onChange={e => handleTextChange(t.id, e.target.value)}
-                          onFocus={() => setSelectedTextId(t.id)}
-                        />
-                        {/* Remove button */}
-                        <button
-                          className="ml-1 text-xs text-red-500 opacity-0 group-hover:opacity-100"
-                          onClick={() => handleRemoveText(t.id)}
-                          tabIndex={-1}
-                          type="button"
-                          style={{ position: 'absolute', top: 2, right: 2, zIndex: 4 }}
-                        >
-                          ✕
-                        </button>
-                        {/* Resize handles */}
-                        {/* Right handle */}
-                        <div
-                          style={{
-                            position: 'absolute',
-                            right: -6,
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            width: 12,
-                            height: 12,
-                            background: '#fff',
-                            border: '1px solid #888',
-                            borderRadius: '50%',
-                            cursor: 'ew-resize',
-                            zIndex: 3,
-                          }}
-                          onMouseDown={e => handleResizeMouseDown(e, t.id, 'right')}
-                        />
-                        {/* Bottom handle */}
-                        <div
-                          style={{
-                            position: 'absolute',
-                            left: '50%',
-                            bottom: -6,
-                            transform: 'translateX(-50%)',
-                            width: 12,
-                            height: 12,
-                            background: '#fff',
-                            border: '1px solid #888',
-                            borderRadius: '50%',
-                            cursor: 'ns-resize',
-                            zIndex: 3,
-                          }}
-                          onMouseDown={e => handleResizeMouseDown(e, t.id, 'bottom')}
-                        />
-                        {/* Corner handle */}
-                        <div
-                          style={{
-                            position: 'absolute',
-                            right: -6,
-                            bottom: -6,
-                            width: 12,
-                            height: 12,
-                            background: '#fff',
-                            border: '1px solid #888',
-                            borderRadius: '50%',
-                            cursor: 'nwse-resize',
-                            zIndex: 3,
-                          }}
-                          onMouseDown={e => handleResizeMouseDown(e, t.id, 'corner')}
-                        />
-                      </div>
+                        text={t}
+                        selected={selectedTextId === t.id}
+                        isResizing={!!resizeState && resizeState.id === t.id}
+                        isRotating={!!rotateState && rotateState.id === t.id}
+                        colors={colors}
+                        fonts={fonts}
+                        onChange={handleTextChange}
+                        onSelect={setSelectedTextId}
+                        onRemove={handleRemoveText}
+                        onResizeMouseDown={handleResizeMouseDown}
+                        onRotateMouseDown={handleRotateMouseDown}
+                        onMouseDown={handleMouseDown}
+                        onColorChange={handleTextColorChange}
+                        onFontChange={handleTextFontChange}
+                        onFontSizeChange={handleTextFontSizeChange}
+                      />
                     ))}
+                    {/* Hidden canvas for export */}
+                    <canvas ref={canvasRef} style={{ display: 'none' }} />
                   </div>
                 ) : (
                   <span className="text-gray-400">No image selected</span>
                 )}
               </div>
-            </section>
-            {/* Controls for selected text */}
-            {selectedTextId !== null && (
-              (() => {
-                const selected = memeTexts.find(t => t.id === selectedTextId);
-                if (!selected) return null;
-                return (
-                  <div className="flex flex-wrap gap-4 items-center mb-2 p-2 bg-gray-50 rounded border border-gray-200">
-                    <span className="text-xs font-semibold">Edit Selected Text:</span>
-                    {/* Color picker */}
-                    <div className="flex gap-1 items-center">
-                      {colors.map(c => (
-                        <button
-                          key={c}
-                          className={`w-6 h-6 rounded-full border-2 ${selected.color === c ? 'border-black' : 'border-gray-300'}`}
-                          style={{ background: c }}
-                          onClick={() => handleTextColorChange(selected.id, c)}
-                          aria-label={c}
-                          type="button"
-                        />
-                      ))}
-                    </div>
-                    {/* Font dropdown */}
-                    <select
-                      className="border rounded px-2 py-1 text-xs"
-                      value={selected.font}
-                      onChange={e => handleTextFontChange(selected.id, e.target.value)}
+              {/* Stylish Meme Actions Bar - outside preview */}
+              {image && (
+                <div className="flex flex-wrap gap-4 justify-center items-center mt-6 mb-2 p-4 bg-gradient-to-r from-yellow-100 via-blue-100 to-green-100 rounded-xl shadow-lg border border-gray-200">
+                  {isAuthenticated && (
+                    <button
+                      className="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-5 py-2 rounded-lg shadow transition text-base"
+                      onClick={handleSaveToCollection}
                     >
-                      {fonts.map(f => (
-                        <option key={f} value={f}>{f}</option>
-                      ))}
-                    </select>
-                    {/* Font size slider */}
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="range"
-                        min={16}
-                        max={64}
-                        value={selected.fontSize}
-                        onChange={e => handleTextFontSizeChange(selected.id, Number(e.target.value))}
-                        className="w-24"
-                      />
-                      <span className="text-xs">{selected.fontSize}px</span>
-                    </div>
-                  </div>
-                );
-              })()
-            )}
+                      <span role="img" aria-label="save">💾</span> Save to Collection
+                    </button>
+                  )}
+                  <button
+                    className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-bold px-5 py-2 rounded-lg shadow transition text-base"
+                    onClick={() => handleShare('facebook')}
+                  >
+                    <span role="img" aria-label="share">🔗</span> Share
+                  </button>
+                  <button
+                    className="flex items-center gap-2 bg-gray-800 hover:bg-black text-white font-bold px-5 py-2 rounded-lg shadow transition text-base"
+                    onClick={handleDownload}
+                  >
+                    <span role="img" aria-label="download">⬇️</span> Download
+                  </button>
+                </div>
+              )}
+            </section>
           </div>
         </div>
       </PageLayout>

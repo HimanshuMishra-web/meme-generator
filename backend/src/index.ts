@@ -23,6 +23,7 @@ app.use(cors());
 app.use(express.json());
 
 // Serve static files from assets directory
+app.use('/assets', express.static(path.join(__dirname, '../assets')));
 app.use('/assets/media', express.static(path.join(__dirname, '../assets/media')));
 
 app.get('/', (req, res) => {

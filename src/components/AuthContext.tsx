@@ -111,6 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsAuthenticated(false);
     localStorage.removeItem(LOCAL_STORAGE_KEY);
     queryClient.clear();
+    window.location.href = '/'; // Redirect to home page
   };
 
   const handleAuthError = (error: any) => {

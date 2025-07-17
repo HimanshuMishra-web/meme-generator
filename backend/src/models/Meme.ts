@@ -1,23 +1,19 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
 
-export interface IGeneratedImage extends Document {
+export interface IMeme extends Document {
   url: string;
-  prompt?: string;
-  style?: string;
-  modelUsed?: string;
+  overlays?: any[];
   createdAt: Date;
   is_public: boolean;
   user: Types.ObjectId;
 }
 
-const GeneratedImageSchema: Schema = new Schema({
+const MemeSchema: Schema = new Schema({
   url: { type: String, required: true },
-  prompt: { type: String },
-  style: { type: String },
-  modelUsed: { type: String },
+  overlays: { type: Array },
   createdAt: { type: Date, default: Date.now },
   is_public: { type: Boolean, default: false },
   user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
 });
 
-export default mongoose.model<IGeneratedImage>('GeneratedImage', GeneratedImageSchema); 
+export default mongoose.model<IMeme>('Meme', MemeSchema); 
