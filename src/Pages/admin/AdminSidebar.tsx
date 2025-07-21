@@ -1,9 +1,10 @@
 import React from 'react';
 import { useAuth } from '../../components/AuthContext';
+import { FiLogOut, FiUser } from 'react-icons/fi';
 
 interface AdminSidebarProps {
-  activeSection: 'dashboard' | 'users' | 'templates';
-  setActiveSection: (section: 'dashboard' | 'users' | 'templates') => void;
+  activeSection: 'dashboard' | 'users' | 'templates' | 'testimonials';
+  setActiveSection: (section: 'dashboard' | 'users' | 'templates' | 'testimonials') => void;
 }
 
 const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeSection, setActiveSection }) => {
@@ -40,6 +41,16 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeSection, setActiveSec
         </svg>
       ),
       showFor: ['admin', 'super_admin'] as const
+    },
+    {
+      id: 'testimonials' as const,
+      label: 'Testimonials',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87M16 3.13a4 4 0 010 7.75M8 3.13a4 4 0 000 7.75" />
+        </svg>
+      ),
+      showFor: ['super_admin'] as const
     }
   ];
 
@@ -50,58 +61,67 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeSection, setActiveSec
   });
 
   return (
-    <div className="w-64 bg-white shadow-lg min-h-screen">
-      <div className="p-6 border-b border-gray-200">
-        <h1 className="text-xl font-bold text-gray-900">Admin Panel</h1>
-        <div className="mt-2 flex items-center space-x-2">
-          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-            user?.role === 'super_admin' ? 'bg-purple-100 text-purple-800' : 'bg-orange-100 text-orange-800'
-          }`}>
-            {user?.role === 'super_admin' ? 'Super Admin' : 'Admin'}
-          </span>
+    <div className="w-64 bg-white shadow-lg min-h-screen flex flex-col justify-between">
+      <div>
+        <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+          <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            Admin Panel
+            <span className="flex items-center gap-2 ml-2">
+              {/* Profile icon with tooltip */}
+              <span className="relative group">
+                <button className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-gray-700 font-bold text-sm focus:outline-none" title={user?.username}>
+                  {user?.username?.charAt(0).toUpperCase() || <FiUser />}
+                </button>
+                <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-40 bg-white text-xs text-gray-700 rounded shadow-lg p-2 opacity-0 group-hover:opacity-100 pointer-events-none z-10">
+                  <div className="font-semibold">{user?.username}</div>
+                  <div className="text-gray-500">{user?.email}</div>
+                </div>
+              </span>
+              {/* Logout icon with tooltip */}
+              <span className="relative group">
+                <button onClick={signOut} className="w-8 h-8 flex items-center justify-center rounded-full text-red-500 hover:bg-red-100 focus:outline-none" title="Logout">
+                  <FiLogOut size={18} />
+                </button>
+                <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-20 bg-white text-xs text-gray-700 rounded shadow-lg p-2 opacity-0 group-hover:opacity-100 pointer-events-none z-10 text-center">
+                  Logout
+                </div>
+              </span>
+            </span>
+          </h1>
         </div>
+
+        <nav className="mt-6">
+          <div className="px-4 space-y-2">
+            {filteredMenuItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setActiveSection(item.id)}
+                className={`w-full flex items-center space-x-3 px-4 py-3 text-left rounded-lg transition-colors ${
+                  activeSection === item.id
+                    ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                {item.icon}
+                <span className="font-medium">{item.label}</span>
+              </button>
+            ))}
+          </div>
+        </nav>
       </div>
 
-      <nav className="mt-6">
-        <div className="px-4 space-y-2">
-          {filteredMenuItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveSection(item.id)}
-              className={`w-full flex items-center space-x-3 px-4 py-3 text-left rounded-lg transition-colors ${
-                activeSection === item.id
-                  ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              {item.icon}
-              <span className="font-medium">{item.label}</span>
-            </button>
-          ))}
-        </div>
-      </nav>
-
-      <div className="absolute bottom-0 w-64 p-4 border-t border-gray-200">
-        <div className="flex items-center space-x-3 mb-4">
-          <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-            <span className="text-sm font-medium text-gray-700">
-              {user?.username?.charAt(0).toUpperCase()}
-            </span>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-900">{user?.username}</p>
-            <p className="text-xs text-gray-500">{user?.email}</p>
-          </div>
-        </div>
-        <button
-          onClick={signOut}
-          className="w-full flex items-center justify-center space-x-2 px-4 py-2 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
+      <div className="p-4">
+        <a
+          href="/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full flex items-center justify-center space-x-2 px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-semibold"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 3h7v7m0 0L10 21l-7-7 11-11z" />
           </svg>
-          <span>Sign Out</span>
-        </button>
+          <span>Go To Website</span>
+        </a>
       </div>
     </div>
   );

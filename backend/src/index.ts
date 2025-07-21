@@ -10,6 +10,7 @@ import { userRoutes } from './routes/userRoutes';
 import { imageRoutes } from './routes/imageRoutes';
 import { permissionRoutes } from './routes/permissionRoutes';
 import mediaRoutes from './routes/mediaRoutes';
+import testimonialRoutes from './routes/testimonialRoutes';
 
 interface AuthenticatedRequest extends Request {
   user?: any;
@@ -35,6 +36,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/images', imageRoutes);
 app.use('/api/permissions', permissionRoutes);
 app.use('/api/media', mediaRoutes);
+app.use('/api/testimonials', testimonialRoutes);
 
 connectDB().then(() => {
   app.listen(PORT, () => {

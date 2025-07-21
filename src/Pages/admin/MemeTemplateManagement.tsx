@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { API_URL, ASSETS_URL } from '../../../constants';
 import { useAuth } from '../../components/AuthContext';
+import ConfirmDialog from '../../components/ConfirmDialog';
 
 interface MemeTemplate {
   _id: string;
@@ -22,6 +23,8 @@ const MemeTemplateManagement: React.FC = () => {
   const queryClient = useQueryClient();
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   // Helper function to check if file is a video
   const isVideoFile = (template: MemeTemplate) => {
@@ -123,9 +126,19 @@ const MemeTemplateManagement: React.FC = () => {
   };
 
   const handleDeleteTemplate = (templateId: string) => {
-    if (window.confirm('Are you sure you want to delete this template?')) {
-      deleteTemplateMutation.mutate(templateId);
+    setDeleteId(templateId);
+    setConfirmOpen(true);
+  };
+  const handleConfirmDelete = () => {
+    if (deleteId) {
+      deleteTemplateMutation.mutate(deleteId);
+      setDeleteId(null);
+      setConfirmOpen(false);
     }
+  };
+  const handleCancelDelete = () => {
+    setDeleteId(null);
+    setConfirmOpen(false);
   };
 
   const handleToggleTemplateStatus = (templateId: string, currentStatus: boolean) => {
@@ -303,6 +316,15 @@ const MemeTemplateManagement: React.FC = () => {
           isLoading={uploadTemplateMutation.isPending}
         />
       )}
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete Template?"
+        description="Are you sure you want to delete this template? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
     </div>
   );
 };

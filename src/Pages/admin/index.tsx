@@ -3,10 +3,11 @@ import { useAuth } from '../../components/AuthContext';
 import AdminSidebar from './AdminSidebar';
 import UserManagement from './UserManagement';
 import MemeTemplateManagement from './MemeTemplateManagement';
+import TestimonialManagement from './TestimonialManagement';
 
 const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
-  const [activeSection, setActiveSection] = useState<'dashboard' | 'users' | 'templates'>('dashboard');
+  const [activeSection, setActiveSection] = useState<'dashboard' | 'users' | 'templates' | 'testimonials'>('dashboard');
 
   // Check if user is admin or super admin
   if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
@@ -26,6 +27,8 @@ const AdminDashboard: React.FC = () => {
         return <UserManagement />;
       case 'templates':
         return <MemeTemplateManagement />;
+      case 'testimonials':
+        return <TestimonialManagement />;
       default:
         return (
           <div className="p-6">

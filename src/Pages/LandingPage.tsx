@@ -3,8 +3,19 @@ import { Link } from 'react-router-dom';
 import MemeCard from '../components/MemeCard';
 import PageLayout from '../components/PageLayout';
 import { trendingMemes } from '../data/memes';
+import { useQuery } from '@tanstack/react-query';
+import { apiService } from '../services/axiosInstance';
+import { generateImageSource } from '../utils';
+import Testimonials from '../components/Testimonials';
 
 export default function LandingPage() {
+  // Fetch testimonials
+  const { data: testimonialsRaw = [] } = useQuery({
+    queryKey: ['testimonials-public'],
+    queryFn: async () => await apiService.get('/testimonials'),
+  });
+  const testimonials = testimonialsRaw as any[];
+
   return (
     <div className="min-h-screen bg-white text-gray-900">
       <PageLayout>
@@ -56,41 +67,10 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
-        {/* Community Highlights */}
+        {/* Community Highlights (Testimonials) */}
         <section className="mb-10">
-          <h3 className="font-semibold mb-2">Community Highlights</h3>
-          <div className="space-y-6">
-            <div className="bg-gray-50 rounded-lg p-6 flex flex-col gap-2 border">
-              <div className="flex items-center gap-3">
-                <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Alex" className="w-10 h-10 rounded-full" />
-                <div>
-                  <span className="font-bold">Alex K.</span>
-                  <span className="ml-2 text-xs text-gray-400">2 months ago</span>
-                </div>
-                <span className="ml-auto text-yellow-400 text-lg">★★★★★</span>
-              </div>
-              <p className="text-gray-700 text-sm mt-2">This meme generator is amazing! The AI image generation is a game-changer, and I love the variety of templates available. Highly recommend!</p>
-              <div className="flex gap-4 mt-2 text-gray-400 text-xs">
-                <span>👍 12</span>
-                <span>💬 3</span>
-              </div>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-6 flex flex-col gap-2 border">
-              <div className="flex items-center gap-3">
-                <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Sarah" className="w-10 h-10 rounded-full" />
-                <div>
-                  <span className="font-bold">Sarah L.</span>
-                  <span className="ml-2 text-xs text-gray-400">6 weeks ago</span>
-                </div>
-                <span className="ml-auto text-yellow-400 text-lg">★★★★★</span>
-              </div>
-              <p className="text-gray-700 text-sm mt-2">Great platform for creating memes. The sharing feature is super convenient, and I’ve already gotten a lot of laughs from my friends!</p>
-              <div className="flex gap-4 mt-2 text-gray-400 text-xs">
-                <span>👍 8</span>
-                <span>💬 1</span>
-              </div>
-            </div>
-          </div>
+          <h3 className="font-semibold mb-2">What Our Users Say</h3>
+          <Testimonials testimonials={testimonials} />
         </section>
       </PageLayout>
       <footer className="border-t py-6 text-center text-gray-400 text-sm mt-10">

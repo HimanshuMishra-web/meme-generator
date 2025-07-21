@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { API_URL } from '../../../constants';
 import { useAuth } from '../../components/AuthContext';
 import { apiService } from '../../services/axiosInstance';
+import ConfirmDialog from '../../components/ConfirmDialog';
 
 interface User {
   _id: string;
@@ -30,6 +31,8 @@ const UserManagement: React.FC = () => {
   const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   // Debug logging
   console.log('Current user:', user);
@@ -145,9 +148,19 @@ const UserManagement: React.FC = () => {
   const handleDeleteUser = (userId: string) => {
     const userToDelete = users.find((u: User) => u._id === userId);
     if (userToDelete && userToDelete.role === 'super_admin') return; // Prevent deleting super admin
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      deleteUserMutation.mutate(userId);
+    setDeleteId(userId);
+    setConfirmOpen(true);
+  };
+  const handleConfirmDelete = () => {
+    if (deleteId) {
+      deleteUserMutation.mutate(deleteId);
+      setDeleteId(null);
+      setConfirmOpen(false);
     }
+  };
+  const handleCancelDelete = () => {
+    setDeleteId(null);
+    setConfirmOpen(false);
   };
 
   if (isLoading) return <div className="p-6">Loading users...</div>;
@@ -366,6 +379,15 @@ const UserManagement: React.FC = () => {
           }}
         />
       )}
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete User?"
+        description="Are you sure you want to delete this user? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
     </div>
   );
 };

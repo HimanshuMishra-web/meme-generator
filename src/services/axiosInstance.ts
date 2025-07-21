@@ -87,22 +87,24 @@ class ApiService {
     return this.handleResponse<T>(response);
   }
 
-  async put<T>(endpoint: string, data: any, token?: string): Promise<T> {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
+  async put<T>(endpoint: string, data: any, token?: string, isFormData?: boolean): Promise<T> {
+    const headers: Record<string, string> = {};
     const authToken = token || this.getAuthToken();
     if (authToken) {
       headers['Authorization'] = `Bearer ${authToken}`;
     }
-
+    let body: any;
+    if (isFormData && data instanceof FormData) {
+      body = data;
+    } else {
+      headers['Content-Type'] = 'application/json';
+      body = JSON.stringify(data);
+    }
     const response = await fetch(`${this.baseURL}${endpoint}`, {
       method: 'PUT',
       headers,
-      body: JSON.stringify(data),
+      body,
     });
-
     return this.handleResponse<T>(response);
   }
 
