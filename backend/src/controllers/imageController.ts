@@ -102,3 +102,16 @@ export const saveToCollection = async (req: Request, res: Response) => {
     res.status(500).json({ error: error.message || 'Failed to save to collection' });
   }
 };
+
+export const getMyMemes = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    return res.status(401).json({ error: 'User not authenticated' });
+  }
+  try {
+    const memes = await Meme.find({ user: userId }).sort({ createdAt: -1 });
+    res.json({ memes });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Failed to fetch memes' });
+  }
+};

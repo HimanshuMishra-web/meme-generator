@@ -6,7 +6,7 @@ interface PageLayoutProps {
 }
 
 const PageLayout: React.FC<PageLayoutProps> = ({ children, className }) => (
-  <main className={`max-w-4xl mx-auto px-4 py-10 ${className || ''}`}>
+  <main className={`max-w-7xl mx-auto px-4 py-10 ${className || ''}`}>
     {children}
   </main>
 );

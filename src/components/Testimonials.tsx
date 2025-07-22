@@ -5,6 +5,7 @@ import { Navigation } from 'swiper/modules';
 import { motion } from 'framer-motion';
 import 'swiper/css';
 import 'swiper/css/navigation';
+import { MdArrowBack, MdArrowForward } from 'react-icons/md';
 
 interface Testimonial {
   _id: string;
@@ -48,18 +49,18 @@ const Testimonials: React.FC<TestimonialsProps> = ({ testimonials }) => {
       {/* Navigation arrows - fixed position, always visible */}
       <div className="absolute left-1/2 -translate-x-1/2 bottom-8 z-30 flex gap-16">
         <button
-          className="testimonial-prev bg-yellow-400 hover:bg-yellow-500 text-black rounded-full w-16 h-16 flex items-center justify-center shadow border-2 border-yellow-300 focus:outline-none transition-colors overflow-hidden"
+          className="testimonial-prev bg-yellow-400 hover:bg-yellow-500 text-white rounded-full w-16 h-16 flex items-center justify-center shadow border-2 border-yellow-300 focus:outline-none transition-colors overflow-hidden"
           aria-label="Previous testimonial"
           style={{ aspectRatio: '1/1' }}
         >
-          <span className="text-3xl">&#8592;</span>
+          <MdArrowBack size={40} color="white" style={{ fontWeight: 900 }} />
         </button>
         <button
-          className="testimonial-next bg-yellow-400 hover:bg-yellow-500 text-black rounded-full w-16 h-16 flex items-center justify-center shadow border-2 border-yellow-300 focus:outline-none transition-colors overflow-hidden"
+          className="testimonial-next bg-yellow-400 hover:bg-yellow-500 text-white rounded-full w-16 h-16 flex items-center justify-center shadow border-2 border-yellow-300 focus:outline-none transition-colors overflow-hidden"
           aria-label="Next testimonial"
           style={{ aspectRatio: '1/1' }}
         >
-          <span className="text-3xl">&#8594;</span>
+          <MdArrowForward size={40} color="white" style={{ fontWeight: 900 }} />
         </button>
       </div>
       <Swiper

@@ -135,3 +135,45 @@ export const updateUserPermissions = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Failed to update user permissions", error });
   }
 };
+
+export const updateMyProfile = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    return res.status(401).json({ message: 'User not authenticated' });
+  }
+  try {
+    const { password, ...updateData } = req.body;
+    if (req.file) {
+      updateData.profileImage = req.file.filename;
+    }
+    // If password is being updated, hash it
+    let updateFields = updateData;
+    if (password) {
+      const user = await User.findById(userId);
+      if (user) {
+        user.password = password;
+        await user.save();
+        updateFields = { ...updateData, password: user.password };
+      }
+    }
+    const user = await User.findByIdAndUpdate(userId, updateFields, { new: true }).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to update profile', error });
+  }
+};
+
+export const getMyProfile = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    return res.status(401).json({ message: 'User not authenticated' });
+  }
+  try {
+    const user = await User.findById(userId).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch profile', error });
+  }
+};

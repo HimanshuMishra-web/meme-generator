@@ -36,6 +36,24 @@ const upload = multer({
   }
 });
 
+// PUT /api/users/me (update own profile)
+router.put('/me', authMiddleware, (req, res, next) => {
+  upload.single('profileImage')(req, res, (err) => {
+    if (err) {
+      if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          return res.status(400).json({ message: 'Profile image size must be less than 5MB' });
+        }
+      } else if (err.message === 'Only image files are allowed') {
+        return res.status(400).json({ message: 'Only image files are allowed for profile images' });
+      }
+      return res.status(500).json({ message: 'File upload error', error: err.message });
+    }
+    void userController.updateMyProfile(req, res);
+  });
+});
+// GET /api/users/me (get own profile)
+router.get('/me', authMiddleware, asyncHandler(userController.getMyProfile));
 // Define user routes with super admin protection and error handling
 router.get('/', authMiddleware, requireSuperAdmin, asyncHandler(userController.getAllUsers));
 router.get('/:id', authMiddleware, requireSuperAdmin, asyncHandler(userController.getUserById));

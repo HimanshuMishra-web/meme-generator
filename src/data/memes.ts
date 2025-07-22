@@ -125,7 +125,61 @@ export const trendingMemes = [
   },
   {
     id: '103',
-    image: 'https://placehold.co/200x200',
+    image: 'https://i.imgflip.com/1ur9b0.jpg',
+    author: {
+      name: 'Emily Clark',
+      username: '@emily_clark',
+      avatar: 'https://randomuser.me/api/portraits/women/55.jpg',
+    },
+    tags: ['#trending', '#funny', '#lol', '#memes'],
+    description: 'When you finish a series and don’t know what to do with your life.',
+    comments: [
+      {
+        id: 1,
+        author: { name: 'Chris Evans', avatar: 'https://randomuser.me/api/portraits/men/56.jpg' },
+        text: 'I feel this on a spiritual level.'
+      }
+    ]
+  },
+  {
+    id: '104',
+    image: 'https://i.imgflip.com/1ur9b0.jpg',
+    author: {
+      name: 'Emily Clark',
+      username: '@emily_clark',
+      avatar: 'https://randomuser.me/api/portraits/women/55.jpg',
+    },
+    tags: ['#trending', '#funny', '#lol', '#memes'],
+    description: 'When you finish a series and don’t know what to do with your life.',
+    comments: [
+      {
+        id: 1,
+        author: { name: 'Chris Evans', avatar: 'https://randomuser.me/api/portraits/men/56.jpg' },
+        text: 'I feel this on a spiritual level.'
+      }
+    ]
+  },
+  {
+    id: '105',
+    image: 'https://i.imgflip.com/1ur9b0.jpg',
+    author: {
+      name: 'Emily Clark',
+      username: '@emily_clark',
+      avatar: 'https://randomuser.me/api/portraits/women/55.jpg',
+    },
+    tags: ['#trending', '#funny', '#lol', '#memes'],
+    description: 'When you finish a series and don’t know what to do with your life.',
+    comments: [
+      {
+        id: 1,
+        author: { name: 'Chris Evans', avatar: 'https://randomuser.me/api/portraits/men/56.jpg' },
+        text: 'I feel this on a spiritual level.'
+      }
+    ]
+  },
+  {
+    id: '106',
+    image: 'https://i.imgflip.com/5c7lwq.png',
     author: {
       name: 'Emily Clark',
       username: '@emily_clark',

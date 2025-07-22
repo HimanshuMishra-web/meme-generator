@@ -7,6 +7,8 @@ import { useQuery } from '@tanstack/react-query';
 import { apiService } from '../services/axiosInstance';
 import { generateImageSource } from '../utils';
 import Testimonials from '../components/Testimonials';
+import TrendingMemes from '../components/TrendingMemes';
+import FeaturesSection from '../components/FeaturesSection';
 
 export default function LandingPage() {
   // Fetch testimonials
@@ -31,42 +33,17 @@ export default function LandingPage() {
           </div>
         </section>
         {/* Trending Memes */}
-        <section className="mb-10">
-          <h2 className="text-xl font-bold mb-4">Trending Memes</h2>
-          <div className="flex gap-6">
-            {trendingMemes.map((meme) => (
-              <MemeCard
-                key={meme.id}
-                src={meme.image}
-                alt={meme.description}
-                title={meme.description}
-              />
-            ))}
-          </div>
-        </section>
+        <TrendingMemes memes={trendingMemes} />
+        <div className="flex justify-center mt-4 mb-12">
+          <Link
+            to="/memes"
+            className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-2 px-8 rounded-full shadow transition text-lg"
+          >
+            View More
+          </Link>
+        </div>
         {/* Features */}
-        <section className="mb-10">
-          <h3 className="font-semibold mb-2">Features</h3>
-          <h2 className="text-2xl font-extrabold mb-2">Meme Creation Made Easy</h2>
-          <p className="text-gray-600 mb-6 max-w-2xl">Our platform offers a range of powerful features to help you create and share your memes effortlessly.</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="border rounded-lg p-4 flex flex-col items-start gap-2 bg-white">
-              <span className="text-2xl">🪄</span>
-              <span className="font-bold">Text-to-Image AI</span>
-              <span className="text-gray-500 text-sm">Generate unique meme images from text prompts using our advanced AI technology.</span>
-            </div>
-            <div className="border rounded-lg p-4 flex flex-col items-start gap-2 bg-white">
-              <span className="text-2xl">🔥</span>
-              <span className="font-bold">Trending Templates</span>
-              <span className="text-gray-500 text-sm">Browse our constantly updating library of popular meme templates to get started quickly.</span>
-            </div>
-            <div className="border rounded-lg p-4 flex flex-col items-start gap-2 bg-white">
-              <span className="text-2xl">⚡</span>
-              <span className="font-bold">Instant Sharing</span>
-              <span className="text-gray-500 text-sm">Share your memes directly to social media platforms with a single click.</span>
-            </div>
-          </div>
-        </section>
+        <FeaturesSection />
         {/* Community Highlights (Testimonials) */}
         <section className="mb-10">
           <h3 className="font-semibold mb-2">What Our Users Say</h3>
