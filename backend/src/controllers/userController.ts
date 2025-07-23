@@ -22,7 +22,7 @@ export const getUserById = async (req: Request, res: Response) => {
 
 export const createUser = async (req: Request, res: Response) => {
   try {
-    const { username, email, password, role, permissions } = req.body;
+    const { username, email, password, role, permissions, bio } = req.body;
     const profileImage = req.file?.filename; // Get uploaded file filename
 
     // Check if user already exists
@@ -39,7 +39,8 @@ export const createUser = async (req: Request, res: Response) => {
       password, 
       role, 
       permissions,
-      profileImage 
+      profileImage,
+      bio
     });
     await user.save();
 
@@ -145,6 +146,14 @@ export const updateMyProfile = async (req: Request, res: Response) => {
     const { password, ...updateData } = req.body;
     if (req.file) {
       updateData.profileImage = req.file.filename;
+    }
+    if (typeof req.body.bio === 'string') {
+      updateData.bio = req.body.bio;
+    }
+    if (typeof req.body.isPublic === 'string') {
+      updateData.isPublic = req.body.isPublic === 'true';
+    } else if (typeof req.body.isPublic === 'boolean') {
+      updateData.isPublic = req.body.isPublic;
     }
     // If password is being updated, hash it
     let updateFields = updateData;

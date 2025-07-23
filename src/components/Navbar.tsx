@@ -21,7 +21,7 @@ const Navbar: React.FC<NavbarProps> = ({ logo, links, className }) => {
   const { isAuthenticated } = useAuth();
 
   return (
-    <nav className={`flex items-center justify-between py-4 px-8 border-b bg-white sticky top-0 z-10 ${className || ''}`}>
+    <nav className={`flex items-center justify-between py-4 px-8 border-b bg-white sticky top-0 z-50 ${className || ''}`}>
       <div className="flex items-center gap-2">
         {logo}
       </div>

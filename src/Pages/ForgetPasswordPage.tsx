@@ -4,9 +4,10 @@ import Player from 'lottie-react';
 import forgetLottie from '../assets/forget-lottie.json';
 import { useMutation } from '@tanstack/react-query';
 import { API_URL } from '../../constants';
+import { toast } from 'react-hot-toast';
 
 async function forgetPasswordApi(email: string) {
-  const res = await fetch(`${API_URL}/forget-password`, {
+  const res = await fetch(`${API_URL}/auth/forget-password`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email }),
@@ -25,10 +26,12 @@ const ForgetPasswordPage: React.FC = () => {
     onSuccess: (data) => {
       setSuccess(data.message || 'If this email is registered, a password reset link has been sent.');
       setError('');
+      toast.success(data.message || 'If this email is registered, a password reset link has been sent.');
     },
     onError: (err: any) => {
       setError(err.message || 'Failed to send reset link');
       setSuccess('');
+      toast.error(err.message || 'Failed to send reset link');
     },
   });
 
@@ -52,8 +55,7 @@ const ForgetPasswordPage: React.FC = () => {
         </div>
         <form onSubmit={handleSubmit} className="w-full md:w-1/2">
           <h2 className="text-2xl font-bold mb-6 text-center">Forgot Password</h2>
-          {error && <div className="text-red-500 mb-4">{error}</div>}
-          {success && <div className="text-green-600 mb-4">{success}</div>}
+          {/* Toast handles error/success messages */}
           <input
             type="email"
             placeholder="Enter your email"

@@ -8,6 +8,8 @@ export interface IUser extends Document {
   role: string;
   permissions: string[];
   profileImage?: string;
+  bio?: string;
+  isPublic?: boolean;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -18,6 +20,8 @@ const UserSchema: Schema<IUser> = new Schema({
   role: { type: String, default: 'user' },
   permissions: [{ type: String }],
   profileImage: { type: String },
+  bio: { type: String },
+  isPublic: { type: Boolean, default: false },
 });
 
 UserSchema.pre('save', async function (next) {

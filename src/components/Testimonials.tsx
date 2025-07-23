@@ -106,7 +106,7 @@ const Testimonials: React.FC<TestimonialsProps> = ({ testimonials }) => {
                     initial={{ opacity: 0, y: 40 }}
                     animate={{ opacity: isActive ? 1 : 0.5, y: isActive ? 0 : 40, scale: isActive ? 1 : 0.95 }}
                     transition={{ type: 'spring', stiffness: 200, damping: 30 }}
-                    className="bg-white rounded-xl shadow-xl px-10 pt-20 pb-12 flex flex-col items-center w-full max-w-2xl relative z-20 min-h-[300px]"
+                    className="bg-white rounded-xl shadow-xl px-12 pt-20 pb-12 flex flex-col items-center w-full max-w-4xl relative z-20 min-h-[300px]"
                   >
                     {/* Overlapping avatar */}
                     <div className="absolute -top-14 left-1/2 -translate-x-1/2 z-30">

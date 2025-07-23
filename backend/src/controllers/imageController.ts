@@ -5,6 +5,7 @@ import Meme from '../models/Meme';
 import path from 'path';
 import fs from 'fs';
 import multer from 'multer';
+import User from '../models/User';
 
 const imageService = new ImageGeneratorService(process.env.OPENAI_API_KEY!);
 
@@ -113,5 +114,25 @@ export const getMyMemes = async (req: Request, res: Response) => {
     res.json({ memes });
   } catch (error: any) {
     res.status(500).json({ error: error.message || 'Failed to fetch memes' });
+  }
+};
+
+export const getCommunityMemes = async (req: Request, res: Response) => {
+  try {
+    // First get all public users
+    const publicUsers = await User.find({ isPublic: true }).select('_id');
+    const publicUserIds = publicUsers.map(user => user._id);
+    
+    // Get memes from public users
+    const memes = await GeneratedImage.find({ 
+      userId: { $in: publicUserIds }
+    })
+    .sort({ createdAt: -1 })
+    .limit(50) // Limit to latest 50 community memes
+    .populate('userId', 'username profileImage isPublic');
+    
+    res.json({ memes });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch community memes', error });
   }
 };

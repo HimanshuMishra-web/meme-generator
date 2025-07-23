@@ -357,40 +357,90 @@ export default function MemeGeneratorPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-gray-900">
-      <PageLayout className="max-w-3xl">
-        <h1 className="text-2xl font-bold mb-2">Create a Meme</h1>
-        <div className="mb-2 text-gray-600 text-sm">Upload an image, select a template, or generate with AI. Add text, then save, share, or download your meme!</div>
-        <Tabs
-          tabs={['Upload / Template', 'AI Generator']}
-          activeTab={activeTab}
-          onTabChange={tab => setActiveTab(tab as 'Upload / Template' | 'AI Generator')}
-          className="mb-8"
-        />
-        {/* Responsive flex container for form and preview */}
-        <div className="flex flex-col md:flex-row gap-8">
-          {/* Generate/Form Section */}
-          <div className="w-full md:w-1/2">
-            {/* Tab Content */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50">
+      {/* Hero Section */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 text-white">
+        <div className="absolute inset-0 bg-black/20"></div>
+        
+        {/* Floating Elements */}
+        <div className="absolute top-10 left-10 w-16 h-16 bg-yellow-400/30 rounded-full blur-xl animate-pulse"></div>
+        <div className="absolute top-20 right-20 w-24 h-24 bg-pink-400/30 rounded-full blur-xl animate-pulse delay-1000"></div>
+        <div className="absolute bottom-10 left-1/3 w-12 h-12 bg-blue-400/30 rounded-full blur-xl animate-pulse delay-500"></div>
+        
+        <div className="relative z-10 container mx-auto px-4 py-16">
+          <div className="text-center max-w-4xl mx-auto">
+            <div className="inline-flex items-center px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full border border-white/30 text-white text-sm font-medium mb-6">
+              🎨 Creative Studio
+            </div>
+            <h1 className="text-4xl lg:text-6xl font-black mb-6 leading-tight">
+              Meme <span className="bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">Creation</span> Studio
+            </h1>
+            <p className="text-xl text-white/90 max-w-2xl mx-auto leading-relaxed">
+              Unleash your creativity! Upload images, generate with AI, add text overlays, and create viral memes that will make the internet laugh! 
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        {/* Enhanced Tabs */}
+        <div className="mb-12">
+          <div className="flex justify-center">
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-2">
+              <div className="flex">
+                {['Upload / Template', 'AI Generator'].map((tab) => (
+                  <button
+                    key={tab}
+                    className={`px-6 py-3 rounded-xl font-bold text-sm transition-all duration-300 ${
+                      activeTab === tab 
+                        ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg' 
+                        : 'text-gray-600 hover:text-indigo-600 hover:bg-gray-50'
+                    }`}
+                    onClick={() => setActiveTab(tab as any)}
+                  >
+                    {tab === 'Upload / Template' ? '📁 Upload / Template' : '🤖 AI Generator'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid lg:grid-cols-2 gap-12">
+          {/* Left Panel - Creation Tools */}
+          <div className="space-y-8">
             {activeTab === 'Upload / Template' && (
-              <>
-                {/* 1. Choose a Template */}
-                <section className="mb-8">
-                  <h2 className="font-semibold mb-2">Choose a Template</h2>
+              <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
+                  <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <span>📁</span>
+                    Choose Your Canvas
+                  </h2>
+                  <p className="text-gray-600 text-sm mt-1">Upload an image or select from templates</p>
+                </div>
+                <div className="p-6">
                   <label
                     htmlFor="image-upload"
-                    className="block border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer bg-gray-50 hover:bg-gray-100 transition"
+                    className="block border-2 border-dashed border-indigo-300 rounded-2xl p-12 text-center cursor-pointer bg-gradient-to-br from-indigo-50 to-purple-50 hover:from-indigo-100 hover:to-purple-100 transition-all duration-300 group"
                     onDrop={handleDrop}
                     onDragOver={e => e.preventDefault()}
                   >
-                    <div className="mb-2">Drag and drop an image here, or</div>
-                    <button
-                      type="button"
-                      className="bg-gray-200 px-4 py-2 rounded font-semibold text-gray-700 hover:bg-gray-300"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      Select an Image
-                    </button>
+                    <div className="space-y-4">
+                      <div className="text-6xl group-hover:scale-110 transition-transform duration-300">🎨</div>
+                      <div className="space-y-2">
+                        <div className="text-lg font-medium text-gray-700">Drag and drop an image here</div>
+                        <div className="text-gray-500">or</div>
+                        <button
+                          type="button"
+                          className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          Browse Files
+                        </button>
+                      </div>
+                      <div className="text-sm text-gray-400">Supports JPG, PNG, GIF files</div>
+                    </div>
                     <input
                       id="image-upload"
                       type="file"
@@ -400,150 +450,227 @@ export default function MemeGeneratorPage() {
                       onChange={handleImageUpload}
                     />
                     {image && (
-                      <div className="mt-4 flex justify-center">
-                        <img src={image} alt="Uploaded" className="max-h-40 rounded shadow" />
+                      <div className="mt-6 flex justify-center">
+                        <div className="relative group">
+                          <img src={image} alt="Uploaded" className="max-h-48 rounded-xl shadow-lg" />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 rounded-xl transition-all duration-300"></div>
+                        </div>
                       </div>
                     )}
                   </label>
-                </section>
-              </>
+                </div>
+              </div>
             )}
+
             {activeTab === 'AI Generator' && (
-              <section className="mb-8">
-                <h2 className="font-semibold mb-2">AI Meme Generator</h2>
-                <textarea
-                  className="border rounded px-3 py-2 w-full mb-2"
-                  placeholder="AI Prompt"
-                  value={aiPrompt}
-                  onChange={e => setAiPrompt(e.target.value)}
-                  rows={6}
-                />
-                {/* Image Style Select */}
-                <div className="mb-2">
-                  <label className="block text-sm font-medium mb-1" htmlFor="ai-style-select">Image Style</label>
-                  <select
-                    id="ai-style-select"
-                    className="border rounded px-3 py-2 w-full"
-                    value={aiStyle}
-                    onChange={e => setAiStyle(e.target.value as ImageStyle)}
-                  >
-                    {imageStyles.map(style => (
-                      <option key={style} value={style}>{style.charAt(0).toUpperCase() + style.slice(1)}</option>
-                    ))}
-                  </select>
+              <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+                <div className="bg-gradient-to-r from-purple-50 to-pink-50 px-6 py-4 border-b border-gray-200">
+                  <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <span>🤖</span>
+                    AI Image Generator
+                  </h2>
+                  <p className="text-gray-600 text-sm mt-1">Describe your vision and let AI create it</p>
                 </div>
-                {/* Model Select */}
-                <div className="mb-2">
-                  <label className="block text-sm font-medium mb-1" htmlFor="ai-model-select">Model</label>
-                  <select
-                    id="ai-model-select"
-                    className="border rounded px-3 py-2 w-full"
-                    value={aiModel}
-                    onChange={e => setAiModel(e.target.value as ModelType)}
+                <div className="p-6 space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Describe your meme image
+                    </label>
+                    <textarea
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-4 focus:ring-purple-200 focus:border-purple-400 transition-all duration-300 resize-none"
+                      placeholder="e.g., A surprised cat wearing sunglasses in space..."
+                      value={aiPrompt}
+                      onChange={e => setAiPrompt(e.target.value)}
+                      rows={4}
+                    />
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Style</label>
+                      <select
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-4 focus:ring-purple-200 focus:border-purple-400 transition-all duration-300"
+                        value={aiStyle}
+                        onChange={e => setAiStyle(e.target.value as ImageStyle)}
+                      >
+                        {imageStyles.map(style => (
+                          <option key={style} value={style}>
+                            {style.charAt(0).toUpperCase() + style.slice(1)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Model</label>
+                      <select
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-4 focus:ring-purple-200 focus:border-purple-400 transition-all duration-300"
+                        value={aiModel}
+                        onChange={e => setAiModel(e.target.value as ModelType)}
+                      >
+                        {modelOptions.map(model => (
+                          <option key={model} value={model}>
+                            {model.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <button 
+                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 disabled:opacity-50 disabled:transform-none"
+                    onClick={handleGenerateWithAI} 
+                    disabled={isGenerating || !aiPrompt.trim()}
                   >
-                    {modelOptions.map(model => (
-                      <option key={model} value={model}>{model.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</option>
-                    ))}
-                  </select>
+                    {isGenerating ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Generating Magic...
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center gap-2">
+                        ✨ Generate with AI
+                      </span>
+                    )}
+                  </button>
                 </div>
-                <button className="bg-black text-white px-4 py-2 rounded font-semibold hover:bg-gray-800" onClick={handleGenerateWithAI} disabled={isGenerating}>
-                  {isGenerating ? 'Generating...' : 'Generate with AI'}
-                </button>
-              </section>
+              </div>
             )}
           </div>
-          {/* Preview Section */}
-          <div className="w-full md:w-1/2">
-            <section className="mb-8">
-              <h2 className="font-semibold mb-2 flex items-center justify-between">
-                <span>Preview</span>
+
+          {/* Right Panel - Preview & Tools */}
+          <div className="space-y-8">
+            {/* Preview Section */}
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+              <div className="bg-gradient-to-r from-green-50 to-blue-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <span>🎭</span>
+                    Live Preview
+                  </h2>
+                  <p className="text-gray-600 text-sm mt-1">Your meme comes to life here</p>
+                </div>
                 <button
                   type="button"
-                  className="bg-gray-200 px-2 py-1 rounded text-xs font-semibold text-gray-700 hover:bg-gray-300 ml-2"
+                  className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white px-4 py-2 rounded-xl font-bold shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 text-sm"
                   onClick={handleAddText}
                 >
-                  + Add Text
+                  ➕ Add Text
                 </button>
-              </h2>
-              <div
-                className="bg-gray-100 rounded-lg flex items-center justify-center h-96 mb-2 relative overflow-hidden"
-                ref={previewRef}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
-                onClick={() => setSelectedTextId(null)}
-                style={{ userSelect: draggedId !== null ? 'none' : undefined }}
-              >
-                {isGenerating ? (
-                  <div className="flex flex-col items-center justify-center w-full h-full">
-                    <Lottie animationData={loaderLottie} loop={true} style={{ width: 180, height: 180 }} />
-                    <span className="mt-2 text-base font-semibold text-gray-600">Generating a meme... Hold tight!</span>
-                  </div>
-                ) : image ? (
-                  <div className="w-full h-full flex items-center justify-center relative" style={{ maxHeight: '24rem', maxWidth: '100%' }}>
-                    <img
-                      src={image && (/^(blob:|data:)/.test(image) ? image : (!/^https?:\/\//.test(image) ? `${ASSETS_URL.replace(/\/$/, '')}/${image.replace(/^\//, '')}` : image))}
-                      alt="Preview"
-                      className="object-contain w-full h-full absolute top-0 left-0"
-                      style={{ zIndex: 1 }}
-                    />
-                    {/* Draggable Text Overlays */}
-                    {memeTexts.map(t => (
-                      <MemeTextOverlay
-                        key={t.id}
-                        text={t}
-                        selected={selectedTextId === t.id}
-                        isResizing={!!resizeState && resizeState.id === t.id}
-                        isRotating={!!rotateState && rotateState.id === t.id}
-                        colors={colors}
-                        fonts={fonts}
-                        onChange={handleTextChange}
-                        onSelect={setSelectedTextId}
-                        onRemove={handleRemoveText}
-                        onResizeMouseDown={handleResizeMouseDown}
-                        onRotateMouseDown={handleRotateMouseDown}
-                        onMouseDown={handleMouseDown}
-                        onColorChange={handleTextColorChange}
-                        onFontChange={handleTextFontChange}
-                        onFontSizeChange={handleTextFontSizeChange}
+              </div>
+              <div className="p-6">
+                <div
+                  className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center h-96 mb-4 relative overflow-hidden border-2 border-gray-300"
+                  ref={previewRef}
+                  onMouseMove={handleMouseMove}
+                  onMouseUp={handleMouseUp}
+                  onMouseLeave={handleMouseUp}
+                  onClick={() => setSelectedTextId(null)}
+                  style={{ userSelect: draggedId !== null ? 'none' : undefined }}
+                >
+                  {isGenerating ? (
+                    <div className="flex flex-col items-center justify-center w-full h-full">
+                      <Lottie animationData={loaderLottie} loop={true} style={{ width: 120, height: 120 }} />
+                      <span className="mt-4 text-lg font-bold text-gray-600">✨ Creating your masterpiece...</span>
+                    </div>
+                  ) : image ? (
+                    <div className="w-full h-full flex items-center justify-center relative">
+                      <img
+                        src={image && (/^(blob:|data:)/.test(image) ? image : (!/^https?:\/\//.test(image) ? `${ASSETS_URL.replace(/\/$/, '')}/${image.replace(/^\//, '')}` : image))}
+                        alt="Preview"
+                        className="object-contain w-full h-full absolute top-0 left-0 rounded-xl"
+                        style={{ zIndex: 1 }}
                       />
-                    ))}
-                    {/* Hidden canvas for export */}
-                    <canvas ref={canvasRef} style={{ display: 'none' }} />
+                      {/* Draggable Text Overlays */}
+                      {memeTexts.map(t => (
+                        <MemeTextOverlay
+                          key={t.id}
+                          text={t}
+                          selected={selectedTextId === t.id}
+                          isResizing={!!resizeState && resizeState.id === t.id}
+                          isRotating={!!rotateState && rotateState.id === t.id}
+                          colors={colors}
+                          fonts={fonts}
+                          onChange={handleTextChange}
+                          onSelect={setSelectedTextId}
+                          onRemove={handleRemoveText}
+                          onResizeMouseDown={handleResizeMouseDown}
+                          onRotateMouseDown={handleRotateMouseDown}
+                          onMouseDown={handleMouseDown}
+                          onColorChange={handleTextColorChange}
+                          onFontChange={handleTextFontChange}
+                          onFontSizeChange={handleTextFontSizeChange}
+                        />
+                      ))}
+                      {/* Hidden canvas for export */}
+                      <canvas ref={canvasRef} style={{ display: 'none' }} />
+                    </div>
+                  ) : (
+                    <div className="text-center py-16">
+                      <div className="text-6xl mb-4">🖼️</div>
+                      <h3 className="text-xl font-bold text-gray-700 mb-2">No image selected</h3>
+                      <p className="text-gray-500">Upload an image or generate one with AI to get started</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Action Buttons */}
+                {image && (
+                  <div className="bg-gradient-to-r from-yellow-50 via-green-50 to-blue-50 rounded-2xl p-6 border border-gray-200">
+                    <div className="flex flex-wrap gap-3 justify-center">
+                      {isAuthenticated && (
+                        <button
+                          className="flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                          onClick={handleSaveToCollection}
+                        >
+                          <span>💾</span> Save to Collection
+                        </button>
+                      )}
+                      <button
+                        className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                        onClick={() => handleShare('general')}
+                      >
+                        <span>🔗</span> Share
+                      </button>
+                      <button
+                        className="flex items-center gap-2 bg-gradient-to-r from-gray-700 to-gray-900 hover:from-gray-800 hover:to-black text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                        onClick={handleDownload}
+                      >
+                        <span>⬇️</span> Download
+                      </button>
+                    </div>
                   </div>
-                ) : (
-                  <span className="text-gray-400">No image selected</span>
                 )}
               </div>
-              {/* Stylish Meme Actions Bar - outside preview */}
-              {image && (
-                <div className="flex flex-wrap gap-4 justify-center items-center mt-6 mb-2 p-4 bg-gradient-to-r from-yellow-100 via-blue-100 to-green-100 rounded-xl shadow-lg border border-gray-200">
-                  {isAuthenticated && (
-                    <button
-                      className="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-5 py-2 rounded-lg shadow transition text-base"
-                      onClick={handleSaveToCollection}
-                    >
-                      <span role="img" aria-label="save">💾</span> Save to Collection
-                    </button>
-                  )}
-                  <button
-                    className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-bold px-5 py-2 rounded-lg shadow transition text-base"
-                    onClick={() => handleShare('facebook')}
-                  >
-                    <span role="img" aria-label="share">🔗</span> Share
-                  </button>
-                  <button
-                    className="flex items-center gap-2 bg-gray-800 hover:bg-black text-white font-bold px-5 py-2 rounded-lg shadow transition text-base"
-                    onClick={handleDownload}
-                  >
-                    <span role="img" aria-label="download">⬇️</span> Download
-                  </button>
-                </div>
-              )}
-            </section>
+            </div>
+
+            {/* Tips Section */}
+            <div className="bg-gradient-to-br from-purple-100 via-pink-100 to-orange-100 rounded-2xl p-6 border border-purple-200">
+              <h3 className="font-bold text-purple-800 mb-3 flex items-center gap-2">
+                <span>💡</span>
+                Pro Tips
+              </h3>
+              <ul className="space-y-2 text-purple-700 text-sm">
+                <li className="flex items-start gap-2">
+                  <span className="text-purple-500 mt-0.5">•</span>
+                  <span>Click on text to edit, drag to move, use handles to resize</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-purple-500 mt-0.5">•</span>
+                  <span>Use the rotate handle above text to add some flair</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-purple-500 mt-0.5">•</span>
+                  <span>Press Ctrl+Enter in text to add line breaks</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-purple-500 mt-0.5">•</span>
+                  <span>Experiment with different AI styles for unique results</span>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
-      </PageLayout>
+      </div>
     </div>
   );
 } 

@@ -17,6 +17,7 @@ interface Profile {
   profileImage?: string;
   createdAt?: string;
   likesReceived?: number;
+  isPublic?: boolean;
 }
 
 interface Meme {
@@ -30,20 +31,20 @@ const UserProfilePage: React.FC = () => {
   const { token } = useAuth();
   const [activeTab, setActiveTab] = useState('Created');
   const [editMode, setEditMode] = useState(false);
-  const [form, setForm] = useState({ name: '', bio: '', avatar: null as File | null });
+  const [form, setForm] = useState<{ name: string; bio: string; avatar: File | null; isPublic: boolean }>({ name: '', bio: '', avatar: null, isPublic: false });
   const [avatarPreview, setAvatarPreview] = useState<string>('');
 
   // Fetch profile
   const { data: profile, isLoading: loadingProfile, error: errorProfile, refetch: refetchProfile } = useQuery<Profile>({
     queryKey: ['my-profile'],
-    queryFn: async () => await apiService.get<Profile>('/users/me', token),
+    queryFn: async () => await apiService.get<Profile>('/users/me', token ?? undefined),
     enabled: !!token
   });
 
   // Sync form and avatarPreview with profile
   useEffect(() => {
     if (profile) {
-      setForm(f => ({ ...f, name: profile.username || '', bio: profile.bio || '' }));
+      setForm(f => ({ ...f, name: profile.username || '', bio: profile.bio || '', isPublic: profile.isPublic || false }));
       setAvatarPreview(profile.profileImage ? generateImageSource('/assets/media/' + profile.profileImage) : '');
     }
   }, [profile]);
@@ -51,14 +52,14 @@ const UserProfilePage: React.FC = () => {
   // Fetch memes
   const { data: memesData, isLoading: loadingMemes, error: errorMemes } = useQuery<{ memes: Meme[] }>({
     queryKey: ['my-memes'],
-    queryFn: async () => await apiService.get<{ memes: Meme[] }>('/images/my-memes', token),
+    queryFn: async () => await apiService.get<{ memes: Meme[] }>('/images/my-memes', token ?? undefined),
     enabled: !!token
   });
   const memes = memesData?.memes || [];
 
   // Profile update mutation
   const updateMutation = useMutation({
-    mutationFn: async (formData: FormData) => await apiService.put<Profile>('/users/me', formData, token, true),
+    mutationFn: async (formData: FormData) => await apiService.put<Profile>('/users/me', formData, token ?? undefined, true),
     onSuccess: () => {
       setEditMode(false);
       refetchProfile();
@@ -71,7 +72,8 @@ const UserProfilePage: React.FC = () => {
     setForm({
       name: profile?.username || '',
       bio: profile?.bio || '',
-      avatar: null
+      avatar: null,
+      isPublic: profile?.isPublic || false
     });
     setAvatarPreview(profile && profile.profileImage ? generateImageSource('/assets/media/' + profile.profileImage) : '');
   };
@@ -81,14 +83,16 @@ const UserProfilePage: React.FC = () => {
     setForm({
       name: profile?.username || '',
       bio: profile?.bio || '',
-      avatar: null
+      avatar: null,
+      isPublic: profile?.isPublic || false
     });
     setAvatarPreview(profile && profile.profileImage ? generateImageSource('/assets/media/' + profile.profileImage) : '');
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setForm(f => ({ ...f, [name]: value }));
+    const { name, value, type } = e.target;
+    const newValue = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
+    setForm(f => ({ ...f, [name]: newValue }));
   };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -108,6 +112,7 @@ const UserProfilePage: React.FC = () => {
     const formData = new FormData();
     formData.append('username', form.name);
     formData.append('bio', form.bio);
+    formData.append('isPublic', form.isPublic.toString());
     if (form.avatar) formData.append('profileImage', form.avatar);
     updateMutation.mutate(formData);
   };
@@ -117,12 +122,14 @@ const UserProfilePage: React.FC = () => {
   if (errorProfile) return <div className="flex justify-center items-center min-h-screen text-red-500">Failed to load profile.</div>;
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center py-8">
-      <PageLayout className="flex flex-col items-center">
-        {/* Profile Section */}
-        <div className="flex flex-col items-center mb-6 w-full">
-          <div className="relative mb-4">
-            <UserAvatar src={avatarPreview || ''} alt="Profile" size={128} className="mb-2" />
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center py-10">
+      <PageLayout className="flex flex-col items-center w-full">
+        {/* Profile Card */}
+        <div className="relative w-full max-w-xl mb-8">
+          <div className="absolute left-1/2 -top-16 transform -translate-x-1/2 z-10">
+            <div className="rounded-full border-4 border-yellow-400 shadow-lg p-1 bg-white">
+              <UserAvatar src={avatarPreview || ''} alt="Profile" size={128} className="mb-2" />
+            </div>
             {editMode && (
               <input
                 type="file"
@@ -134,43 +141,70 @@ const UserProfilePage: React.FC = () => {
               />
             )}
           </div>
-          {editMode ? (
-            <form className="flex flex-col items-center w-full" onSubmit={handleSave}>
-              <input
-                type="text"
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                className="text-2xl font-bold mb-1 text-center border-b border-gray-300 focus:outline-none focus:border-blue-400 bg-gray-50 px-2 py-1 w-64"
-                required
-              />
-              <textarea
-                name="bio"
-                value={form.bio}
-                onChange={handleChange}
-                className="text-gray-600 mb-1 text-center border-b border-gray-300 focus:outline-none focus:border-blue-400 bg-gray-50 px-2 py-1 w-full max-w-md resize-y"
-                rows={2}
-                placeholder="Add a short bio"
-              />
-              <div className="flex gap-3 mt-3">
-                <button type="submit" className="bg-blue-500 text-white px-6 py-2 rounded font-semibold hover:bg-blue-600 transition disabled:opacity-60" disabled={updateMutation.status === 'pending'}>Save</button>
-                <button type="button" className="bg-gray-200 px-6 py-2 rounded font-semibold text-gray-700 hover:bg-gray-300 transition" onClick={handleCancel} disabled={updateMutation.status === 'pending'}>Cancel</button>
-              </div>
-              {updateMutation.isError && <div className="text-red-500 mt-2">Failed to update profile.</div>}
-            </form>
-          ) : (
-            <>
-              <h2 className="text-2xl font-bold mb-1">{profile?.username}</h2>
-              <p className="text-gray-600 mb-1 text-center">{profile?.bio || 'No bio yet.'}</p>
-              <p className="text-gray-400 text-sm mb-3">Joined {profile?.createdAt ? new Date(profile.createdAt).getFullYear() : ''}</p>
-              <button className="bg-gray-100 px-6 py-2 rounded font-semibold text-gray-700 hover:bg-gray-200 transition" onClick={handleEdit}>Edit Profile</button>
-            </>
-          )}
+          <div className="bg-white rounded-2xl shadow-xl pt-20 pb-8 px-8 flex flex-col items-center border-t-8 border-yellow-400">
+            {editMode ? (
+              <form className="flex flex-col items-center w-full" onSubmit={handleSave}>
+                <input
+                  type="text"
+                  name="name"
+                  value={form.name}
+                  onChange={handleChange}
+                  className="text-2xl font-bold mb-1 text-center border-b border-gray-300 focus:outline-none focus:border-yellow-400 bg-gray-50 px-2 py-1 w-64 rounded"
+                  required
+                />
+                <textarea
+                  name="bio"
+                  value={form.bio}
+                  onChange={handleChange}
+                  className="text-gray-600 mb-1 text-center border-b border-gray-300 focus:outline-none focus:border-yellow-400 bg-gray-50 px-2 py-1 w-full max-w-md resize-y rounded"
+                  rows={2}
+                  placeholder="Add a short bio"
+                />
+                <div className="flex items-center gap-3 mt-4 mb-2">
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name="isPublic"
+                      checked={form.isPublic}
+                      onChange={handleChange}
+                      className="w-4 h-4 text-yellow-400 bg-gray-100 border-gray-300 rounded focus:ring-yellow-300 focus:ring-2"
+                    />
+                    <span className="font-medium">Make profile public</span>
+                    <span className="text-xs text-gray-500">(Show in community)</span>
+                  </label>
+                </div>
+                <div className="flex gap-3 mt-2">
+                  <button type="submit" className="bg-yellow-400 hover:bg-yellow-500 text-black px-6 py-2 rounded-full font-semibold transition disabled:opacity-60 shadow" disabled={updateMutation.status === 'pending'}>Save</button>
+                  <button type="button" className="bg-gray-200 px-6 py-2 rounded-full font-semibold text-gray-700 hover:bg-gray-300 transition shadow" onClick={handleCancel} disabled={updateMutation.status === 'pending'}>Cancel</button>
+                </div>
+                {updateMutation.isError && <div className="text-red-500 mt-2">Failed to update profile.</div>}
+              </form>
+            ) : (
+              <>
+                <h2 className="text-2xl font-bold mb-1">{profile?.username}</h2>
+                {profile?.isPublic && (
+                  <div className="flex items-center justify-center gap-1 mb-2">
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      🌐 Public Profile
+                    </span>
+                  </div>
+                )}
+                <p className="text-gray-600 mb-1 text-center">{profile?.bio || 'No bio yet.'}</p>
+                <p className="text-gray-400 text-sm mb-3">Joined {profile?.createdAt ? new Date(profile.createdAt).getFullYear() : ''}</p>
+                <button className="bg-yellow-400 hover:bg-yellow-500 text-black px-6 py-2 rounded-full font-semibold transition shadow" onClick={handleEdit}>Edit Profile</button>
+              </>
+            )}
+          </div>
         </div>
         {/* Tabs */}
-        <Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} className="mb-6 border-b w-full max-w-4xl justify-center" />
+        <Tabs
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          className="mb-8 w-full max-w-3xl justify-center"
+        />
         {/* Meme Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-full max-w-4xl mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-7 w-full max-w-4xl mb-10">
           {loadingMemes ? (
             <div className="col-span-full text-center">Loading memes...</div>
           ) : errorMemes ? (
@@ -184,14 +218,13 @@ const UserProfilePage: React.FC = () => {
           )}
         </div>
         {/* Stats */}
-        <div className="flex space-x-8 w-full max-w-2xl justify-center">
-          <div className="bg-white rounded-lg shadow p-6 flex-1 flex flex-col items-center">
-            <span className="text-2xl font-bold">{memes.length}</span>
+        <div className="flex space-x-8 w-full max-w-2xl justify-center mt-2">
+          <div className="bg-white rounded-xl shadow p-6 flex-1 flex flex-col items-center border-t-4 border-yellow-400">
+            <span className="text-3xl font-bold flex items-center gap-2">🖼️ {memes.length}</span>
             <span className="text-gray-500 text-sm mt-1">Total memes</span>
           </div>
-          {/* Placeholder for likes, if available in profile */}
-          <div className="bg-white rounded-lg shadow p-6 flex-1 flex flex-col items-center">
-            <span className="text-2xl font-bold">{profile?.likesReceived ?? 0}</span>
+          <div className="bg-white rounded-xl shadow p-6 flex-1 flex flex-col items-center border-t-4 border-yellow-400">
+            <span className="text-3xl font-bold flex items-center gap-2">👍 {profile?.likesReceived ?? 0}</span>
             <span className="text-gray-500 text-sm mt-1">Likes received</span>
           </div>
         </div>
