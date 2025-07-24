@@ -1,5 +1,5 @@
 import express from 'express';
-import { generateImage, saveToCollection, memeUpload, getMyMemes, getCommunityMemes } from '../controllers/imageController';
+import { generateImage, saveToCollection, memeUpload, getMyMemes, getCommunityMemes, getUserPublicMemes, updateGeneratedImagePrivacy, updateMemePrivacy } from '../controllers/imageController';
 import { asyncHandler } from '../utils';
 import { authMiddleware } from '../middleware/authMiddleware';
 
@@ -13,5 +13,11 @@ router.post('/save-to-collection', authMiddleware, memeUpload.single('image'), a
 router.get('/my-memes', authMiddleware, asyncHandler(getMyMemes));
 // GET /api/images/community-memes
 router.get('/community-memes', asyncHandler(getCommunityMemes));
+// GET /api/images/user/:userId/public-memes
+router.get('/user/:userId/public-memes', asyncHandler(getUserPublicMemes));
+// PUT /api/images/generated/:id/privacy
+router.put('/generated/:id/privacy', authMiddleware, asyncHandler(updateGeneratedImagePrivacy));
+// PUT /api/images/meme/:id/privacy
+router.put('/meme/:id/privacy', authMiddleware, asyncHandler(updateMemePrivacy));
 
 export { router as imageRoutes }; 

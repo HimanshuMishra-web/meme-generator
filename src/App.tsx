@@ -6,6 +6,7 @@ import AllMemesPage from './Pages/AllMemesPage';
 import MemeDetailsPage from './Pages/MemeDetailsPage';
 import UserProfilePage from './Pages/UserProfilePage';
 import CommunityPage from './Pages/CommunityPage';
+import UserMemesPage from './Pages/UserMemesPage';
 import Navbar from './components/Navbar';
 import { AuthProvider, useAuth } from './components/AuthContext';
 import SignInPage from './Pages/SignInPage';
@@ -59,6 +60,7 @@ const AppContent: React.FC = () => {
         <Route path="/memes" element={<AllMemesPage />} />
         <Route path="/memes/:id" element={<MemeDetailsPage />} />
         <Route path="/community" element={<CommunityPage />} />
+        <Route path="/user/:userId/memes" element={<UserMemesPage />} />
         <Route path="/profile" element={<UserProfilePage />} />
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/signup" element={<SignUpPage />} />

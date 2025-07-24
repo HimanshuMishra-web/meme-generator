@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import MemeCard from '../components/MemeCard';
 import PageLayout from '../components/PageLayout';
@@ -9,14 +9,45 @@ import { generateImageSource } from '../utils';
 import Testimonials from '../components/Testimonials';
 import TrendingMemes from '../components/TrendingMemes';
 import FeaturesSection from '../components/FeaturesSection';
+import LikeButton from '../components/LikeButton';
+import UserAvatar from '../components/UserAvatar';
+
+interface TrendingMeme {
+  _id: string;
+  url: string;
+  title?: string;
+  description?: string;
+  prompt?: string;
+  style?: string;
+  modelUsed?: string;
+  createdAt: string;
+  is_public: boolean;
+  memeType: 'Meme' | 'GeneratedImage';
+  likeCount: number;
+  reviewCount?: number;
+  user: {
+    _id: string;
+    username: string;
+    profileImage?: string;
+    isPublic: boolean;
+  };
+}
 
 export default function LandingPage() {
+  const [trendingTimeframe, setTrendingTimeframe] = useState<'1d' | '7d' | '30d' | 'all'>('7d');
+
   // Fetch testimonials
   const { data: testimonialsRaw = [] } = useQuery({
     queryKey: ['testimonials-public'],
     queryFn: async () => await apiService.get('/testimonials'),
   });
   const testimonials = testimonialsRaw as any[];
+
+  // Fetch trending memes
+  const { data: trendingData, isLoading: loadingTrending } = useQuery<{ memes: TrendingMeme[]; timeframe: string; total: number }>({
+    queryKey: ['trending-memes', trendingTimeframe],
+    queryFn: async () => await apiService.get<{ memes: TrendingMeme[]; timeframe: string; total: number }>(`/likes/trending?timeframe=${trendingTimeframe}&limit=6`)
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
@@ -171,14 +202,112 @@ export default function LandingPage() {
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Check out what's going viral in our community right now
             </p>
+            
+            {/* Timeframe selector */}
+            <div className="flex justify-center mt-6">
+              <div className="bg-white rounded-full p-1 shadow-lg">
+                {(['1d', '7d', '30d', 'all'] as const).map((timeframe) => (
+                  <button
+                    key={timeframe}
+                    onClick={() => setTrendingTimeframe(timeframe)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                      trendingTimeframe === timeframe
+                        ? 'bg-pink-500 text-white shadow-md'
+                        : 'text-gray-600 hover:text-pink-500'
+                    }`}
+                  >
+                    {timeframe === '1d' ? 'Today' : timeframe === '7d' ? 'This Week' : timeframe === '30d' ? 'This Month' : 'All Time'}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
-          <TrendingMemes memes={trendingMemes} />
+
+          {/* Trending Memes Grid */}
+          {loadingTrending ? (
+            <div className="text-center py-12">
+              <div className="inline-block w-8 h-8 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+              <p className="text-gray-600">Loading trending memes...</p>
+            </div>
+          ) : !trendingData?.memes.length ? (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">🎨</div>
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">No trending memes yet</h3>
+              <p className="text-gray-600">Be the first to create a viral meme!</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              {trendingData.memes.map((meme) => (
+                <div key={meme._id} className="group bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100 transform hover:-translate-y-2">
+                  {/* Trending Badge */}
+                  <div className="relative">
+                    <div className="absolute top-3 left-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg z-10">
+                      🔥 #{trendingData.memes.indexOf(meme) + 1} Trending
+                    </div>
+                    
+                    {/* Meme Image */}
+                    <div className="aspect-square overflow-hidden">
+                      <img 
+                        src={generateImageSource(meme.url)} 
+                        alt={meme.title || meme.description || 'Trending meme'}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Meme Info */}
+                  <div className="p-6">
+                    <div className="flex items-center gap-2 mb-3">
+                      <UserAvatar
+                        src={meme.user.profileImage ? generateImageSource('/assets/media/' + meme.user.profileImage) : ''}
+                        alt={meme.user.username}
+                        size={32}
+                        className="flex-shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <span className="font-bold text-gray-900 text-sm">{meme.user.username}</span>
+                        <p className="text-xs text-gray-500">
+                          {new Date(meme.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {(meme.title || meme.description) && (
+                      <div className="mb-3">
+                        {meme.title && (
+                          <h3 className="font-bold text-gray-800 line-clamp-1 mb-1">{meme.title}</h3>
+                        )}
+                        {meme.description && (
+                          <p className="text-gray-600 text-sm line-clamp-2">{meme.description}</p>
+                        )}
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center justify-between">
+                      <LikeButton 
+                        memeId={meme._id}
+                        memeType={meme.memeType}
+                        size="sm"
+                      />
+                      <div className="flex items-center gap-3 text-xs text-gray-500">
+                        <span>💬 {meme.reviewCount || 0}</span>
+                        <span>
+                          {meme.style ? `AI • ${meme.style}` : 'Custom'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="flex justify-center mt-8">
             <Link
-              to="/memes"
+              to="/community"
               className="group bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-4 px-10 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 text-lg flex items-center gap-2 transform hover:-translate-y-1"
             >
-              View All Memes
+              View Community
               <span className="group-hover:translate-x-1 transition-transform">→</span>
             </Link>
           </div>

@@ -10,6 +10,7 @@ import { API_URL, ASSETS_URL } from '../../constants';
 import MemeTextOverlay from '../components/MemeTextOverlay';
 import { useAuth } from '../components/AuthContext';
 import { toast } from 'react-hot-toast';
+import SaveMemeDialog, { SaveMemeData } from '../components/SaveMemeDialog';
 
 // Add MemeText type
 interface MemeText {
@@ -58,6 +59,9 @@ export default function MemeGeneratorPage() {
   const [aiModel, setAiModel] = useState<ModelType>('dall-e-3');
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiImageMeta, setAiImageMeta] = useState<any>(null); // for new response
+  const [isPublic, setIsPublic] = useState(false); // Add public sharing option
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // --- Resize/Rotate State ---
   const [resizeState, setResizeState] = useState<null | { id: number; startX: number; startY: number; startWidth: number; startHeight: number; direction: 'right' | 'bottom' | 'corner'; }> (null);
@@ -242,7 +246,7 @@ export default function MemeGeneratorPage() {
     try {
       const response = await apiService.post<{ image: any }>(
         '/images/generate',
-        { prompt: aiPrompt, style: aiStyle, model: aiModel }
+        { prompt: aiPrompt, style: aiStyle, model: aiModel, is_public: isPublic }
       );
       // Use the new response format
       setImage(response.image.url);
@@ -300,25 +304,42 @@ export default function MemeGeneratorPage() {
   };
 
   // Save to collection handler (canvas)
-  const handleSaveToCollection = async () => {
+  const handleSaveToCollection = async (saveData: { title: string; description: string; isPublic: boolean }) => {
     const canvas = await renderToCanvas();
     if (!canvas) return;
-    canvas.toBlob(async blob => {
-      if (!blob) return;
-      const formData = new FormData();
-      formData.append('image', blob, 'meme.png');
-      // Optionally add metadata (e.g., overlays, prompt, style, etc.)
-      formData.append('overlays', JSON.stringify(memeTexts));
-      if (aiImageMeta?.prompt) formData.append('prompt', aiImageMeta.prompt);
-      if (aiImageMeta?.style) formData.append('style', aiImageMeta.style);
-      if (aiImageMeta?.modelUsed) formData.append('modelUsed', aiImageMeta.modelUsed);
-      try {
-        await apiService.post('/images/save-to-collection', formData);
-        toast.success('Saved to your collection!');
-      } catch (err: any) {
-        toast.error(err?.response?.data?.error || err.message || 'Failed to save');
-      }
-    }, 'image/png');
+    
+    return new Promise<void>((resolve, reject) => {
+      canvas.toBlob(async blob => {
+        if (!blob) {
+          reject(new Error('Failed to create image blob'));
+          return;
+        }
+        
+        const formData = new FormData();
+        formData.append('image', blob, 'meme.png');
+        formData.append('overlays', JSON.stringify(memeTexts));
+        formData.append('is_public', saveData.isPublic.toString());
+        
+        // Add title and description
+        if (saveData.title) formData.append('title', saveData.title);
+        if (saveData.description) formData.append('description', saveData.description);
+        
+        // Add AI metadata if available
+        if (aiImageMeta?.prompt) formData.append('prompt', aiImageMeta.prompt);
+        if (aiImageMeta?.style) formData.append('style', aiImageMeta.style);
+        if (aiImageMeta?.modelUsed) formData.append('modelUsed', aiImageMeta.modelUsed);
+        
+        try {
+          await apiService.post('/images/save-to-collection', formData);
+          toast.success('Saved to your collection! 🎉');
+          resolve();
+        } catch (err: any) {
+          const errorMessage = err?.response?.data?.error || err.message || 'Failed to save';
+          toast.error(errorMessage);
+          reject(new Error(errorMessage));
+        }
+      }, 'image/png');
+    });
   };
 
   // Download handler (canvas)
@@ -516,6 +537,20 @@ export default function MemeGeneratorPage() {
                     </div>
                   </div>
 
+                  {/* Public sharing option */}
+                  <div className="flex items-center gap-2 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
+                    <input
+                      type="checkbox"
+                      id="isPublicAI"
+                      checked={isPublic}
+                      onChange={(e) => setIsPublic(e.target.checked)}
+                      className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2"
+                    />
+                    <label htmlFor="isPublicAI" className="text-sm font-medium text-green-800 cursor-pointer">
+                      🌐 Share publicly (Show in community)
+                    </label>
+                  </div>
+
                   <button 
                     className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 disabled:opacity-50 disabled:transform-none"
                     onClick={handleGenerateWithAI} 
@@ -616,11 +651,27 @@ export default function MemeGeneratorPage() {
                 {/* Action Buttons */}
                 {image && (
                   <div className="bg-gradient-to-r from-yellow-50 via-green-50 to-blue-50 rounded-2xl p-6 border border-gray-200">
+                    {/* Public sharing option for saving */}
+                    {isAuthenticated && (
+                      <div className="flex items-center justify-center gap-2 mb-4 p-3 bg-white rounded-xl border border-gray-200 shadow-sm">
+                        <input
+                          type="checkbox"
+                          id="savePublic"
+                          checked={isPublic}
+                          onChange={(e) => setIsPublic(e.target.checked)}
+                          className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2"
+                        />
+                        <label htmlFor="savePublic" className="text-sm font-medium text-gray-800 cursor-pointer">
+                          🌐 Share publicly in community
+                        </label>
+                      </div>
+                    )}
+                    
                     <div className="flex flex-wrap gap-3 justify-center">
                       {isAuthenticated && (
                         <button
                           className="flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-                          onClick={handleSaveToCollection}
+                          onClick={() => setShowSaveDialog(true)}
                         >
                           <span>💾</span> Save to Collection
                         </button>
@@ -671,6 +722,24 @@ export default function MemeGeneratorPage() {
           </div>
         </div>
       </div>
+      
+      {/* Save Dialog */}
+      <SaveMemeDialog
+        isOpen={showSaveDialog}
+        onClose={() => setShowSaveDialog(false)}
+        isLoading={isSaving}
+        onSave={async (saveData: SaveMemeData) => {
+          setIsSaving(true);
+          try {
+            await handleSaveToCollection(saveData);
+            setShowSaveDialog(false);
+          } catch (error) {
+            // Error already handled in handleSaveToCollection
+          } finally {
+            setIsSaving(false);
+          }
+        }}
+      />
     </div>
   );
 } 

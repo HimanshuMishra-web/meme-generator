@@ -54,6 +54,8 @@ router.put('/me', authMiddleware, (req, res, next) => {
 });
 // GET /api/users/me (get own profile)
 router.get('/me', authMiddleware, asyncHandler(userController.getMyProfile));
+// GET /api/users/public (get public users - no auth required)
+router.get('/public', asyncHandler(userController.getPublicUsers));
 // Define user routes with super admin protection and error handling
 router.get('/', authMiddleware, requireSuperAdmin, asyncHandler(userController.getAllUsers));
 router.get('/:id', authMiddleware, requireSuperAdmin, asyncHandler(userController.getUserById));

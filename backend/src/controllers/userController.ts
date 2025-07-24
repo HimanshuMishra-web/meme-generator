@@ -1,4 +1,6 @@
 import User from "../models/User";
+import GeneratedImage from "../models/GeneratedImage";
+import Meme from "../models/Meme";
 import { Request, Response } from "express";
 
 export const getAllUsers = async (req: Request, res: Response) => {
@@ -184,5 +186,32 @@ export const getMyProfile = async (req: Request, res: Response) => {
     res.json(user);
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch profile', error });
+  }
+};
+
+export const getPublicUsers = async (req: Request, res: Response) => {
+  try {
+    const publicUsers = await User.find({ isPublic: true })
+      .select('username bio profileImage createdAt isPublic')
+      .sort({ createdAt: -1 });
+    
+    // Get meme counts for each user
+    const usersWithCounts = await Promise.all(
+      publicUsers.map(async (user) => {
+        const [generatedImageCount, memeCount] = await Promise.all([
+          GeneratedImage.countDocuments({ user: user._id, is_public: true }),
+          Meme.countDocuments({ user: user._id, is_public: true })
+        ]);
+        
+        return {
+          ...user.toObject(),
+          publicMemeCount: generatedImageCount + memeCount
+        };
+      })
+    );
+    
+    res.json(usersWithCounts);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch public users', error });
   }
 };

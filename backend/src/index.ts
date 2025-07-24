@@ -11,6 +11,8 @@ import { imageRoutes } from './routes/imageRoutes';
 import { permissionRoutes } from './routes/permissionRoutes';
 import mediaRoutes from './routes/mediaRoutes';
 import testimonialRoutes from './routes/testimonialRoutes';
+import likeRoutes from './routes/likeRoutes';
+import reviewRoutes from './routes/reviewRoutes';
 
 interface AuthenticatedRequest extends Request {
   user?: any;
@@ -37,6 +39,8 @@ app.use('/api/images', imageRoutes);
 app.use('/api/permissions', permissionRoutes);
 app.use('/api/media', mediaRoutes);
 app.use('/api/testimonials', testimonialRoutes);
+app.use('/api/likes', likeRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 connectDB().then(() => {
   app.listen(PORT, () => {
