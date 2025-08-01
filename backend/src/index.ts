@@ -13,6 +13,7 @@ import mediaRoutes from './routes/mediaRoutes';
 import testimonialRoutes from './routes/testimonialRoutes';
 import likeRoutes from './routes/likeRoutes';
 import reviewRoutes from './routes/reviewRoutes';
+import premiumRoutes from './routes/premiumRoutes';
 
 interface AuthenticatedRequest extends Request {
   user?: any;
@@ -41,6 +42,7 @@ app.use('/api/media', mediaRoutes);
 app.use('/api/testimonials', testimonialRoutes);
 app.use('/api/likes', likeRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/premium', premiumRoutes);
 
 connectDB().then(() => {
   app.listen(PORT, () => {

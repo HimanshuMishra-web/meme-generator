@@ -12,6 +12,12 @@ export interface IGeneratedImage extends Document {
   user: Types.ObjectId;
   likeCount?: number;
   reviewCount?: number;
+  // Premium fields
+  isPremium: boolean;
+  price?: number;
+  commission?: number;
+  soldCount?: number;
+  totalEarnings?: number;
 }
 
 const GeneratedImageSchema: Schema = new Schema({
@@ -24,6 +30,12 @@ const GeneratedImageSchema: Schema = new Schema({
   createdAt: { type: Date, default: Date.now },
   is_public: { type: Boolean, default: false },
   user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  // Premium fields
+  isPremium: { type: Boolean, default: false },
+  price: { type: Number, min: 0, default: 0 },
+  commission: { type: Number, min: 0, default: 0 },
+  soldCount: { type: Number, default: 0 },
+  totalEarnings: { type: Number, default: 0 },
 });
 
 // Virtual fields for like and review counts

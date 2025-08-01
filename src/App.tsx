@@ -7,6 +7,8 @@ import MemeDetailsPage from './Pages/MemeDetailsPage';
 import UserProfilePage from './Pages/UserProfilePage';
 import CommunityPage from './Pages/CommunityPage';
 import UserMemesPage from './Pages/UserMemesPage';
+import PremiumMemesPage from './Pages/PremiumMemesPage';
+import PurchasedMemesPage from './Pages/PurchasedMemesPage';
 import Navbar from './components/Navbar';
 import { AuthProvider, useAuth } from './components/AuthContext';
 import SignInPage from './Pages/SignInPage';
@@ -25,6 +27,7 @@ const AppContent: React.FC = () => {
       { label: 'Home', to: '/' },
       { label: 'Create', to: '/create' },
       { label: 'Explore', to: '/memes' },
+      { label: 'Premium', to: '/premium' },
       { label: 'Community', to: '/community' },
     ];
 
@@ -59,6 +62,8 @@ const AppContent: React.FC = () => {
         <Route path="/create" element={<MemeGeneratorPage />} />
         <Route path="/memes" element={<AllMemesPage />} />
         <Route path="/memes/:id" element={<MemeDetailsPage />} />
+        <Route path="/premium" element={<PremiumMemesPage />} />
+        <Route path="/purchased" element={<PurchasedMemesPage />} />
         <Route path="/community" element={<CommunityPage />} />
         <Route path="/user/:userId/memes" element={<UserMemesPage />} />
         <Route path="/profile" element={<UserProfilePage />} />

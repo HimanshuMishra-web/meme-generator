@@ -3,6 +3,7 @@ import UserAvatar from '../components/UserAvatar';
 import Tabs from '../components/Tabs';
 import MemeCard from '../components/MemeCard';
 import PageLayout from '../components/PageLayout';
+import PremiumMemeDialog from '../components/PremiumMemeDialog';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiService } from '../services/axiosInstance';
 import { useAuth } from '../components/AuthContext';
@@ -32,6 +33,11 @@ interface Meme {
   // Identify if it's a generated image or saved meme
   style?: string; // Only present in generated images
   modelUsed?: string; // Only present in generated images
+  // Premium fields
+  isPremium?: boolean;
+  price?: number;
+  soldCount?: number;
+  totalEarnings?: number;
 }
 
 const UserProfilePage: React.FC = () => {
@@ -41,6 +47,8 @@ const UserProfilePage: React.FC = () => {
   const [editMode, setEditMode] = useState(false);
   const [form, setForm] = useState<{ name: string; bio: string; avatar: File | null; isPublic: boolean }>({ name: '', bio: '', avatar: null, isPublic: false });
   const [avatarPreview, setAvatarPreview] = useState<string>('');
+  const [premiumDialogOpen, setPremiumDialogOpen] = useState(false);
+  const [selectedMeme, setSelectedMeme] = useState<Meme | null>(null);
 
   // Fetch profile
   const { data: profile, isLoading: loadingProfile, error: errorProfile, refetch: refetchProfile } = useQuery<Profile>({
@@ -148,6 +156,11 @@ const UserProfilePage: React.FC = () => {
       isPublic: !meme.is_public,
       isGenerated
     });
+  };
+
+  const handlePremiumToggle = (meme: Meme) => {
+    setSelectedMeme(meme);
+    setPremiumDialogOpen(true);
   };
 
   // Loading/error states
@@ -432,8 +445,17 @@ const UserProfilePage: React.FC = () => {
                         className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-110"
                       />
                       
-                      {/* Privacy Controls Overlay */}
+                      {/* Controls Overlay */}
                       <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        {/* Premium Badge */}
+                        {meme.isPremium && (
+                          <div className="flex items-center">
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-yellow-400 to-orange-500 text-white shadow-lg">
+                              💎 ${meme.price}
+                            </span>
+                          </div>
+                        )}
+                        
                         {/* Current Status */}
                         <div className="flex items-center">
                           {meme.is_public ? (
@@ -447,28 +469,47 @@ const UserProfilePage: React.FC = () => {
                           )}
                         </div>
                         
-                        {/* Toggle Button */}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handlePrivacyToggle(meme);
-                          }}
-                          disabled={updatePrivacyMutation.isPending}
-                          className={`inline-flex items-center justify-center px-3 py-2 rounded-full text-xs font-bold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
-                            meme.is_public 
-                              ? 'bg-orange-500 hover:bg-orange-600 text-white' 
-                              : 'bg-blue-500 hover:bg-blue-600 text-white'
-                          }`}
-                          title={meme.is_public ? 'Make Private' : 'Make Public'}
-                        >
-                          {updatePrivacyMutation.isPending ? (
-                            <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
-                          ) : meme.is_public ? (
-                            <>🔒 Private</>
-                          ) : (
-                            <>🌐 Public</>
-                          )}
-                        </button>
+                        {/* Control Buttons */}
+                        <div className="flex flex-col gap-1">
+                          {/* Privacy Toggle */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePrivacyToggle(meme);
+                            }}
+                            disabled={updatePrivacyMutation.isPending}
+                            className={`inline-flex items-center justify-center px-3 py-2 rounded-full text-xs font-bold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
+                              meme.is_public 
+                                ? 'bg-orange-500 hover:bg-orange-600 text-white' 
+                                : 'bg-blue-500 hover:bg-blue-600 text-white'
+                            }`}
+                            title={meme.is_public ? 'Make Private' : 'Make Public'}
+                          >
+                            {updatePrivacyMutation.isPending ? (
+                              <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
+                            ) : meme.is_public ? (
+                              <>🔒 Private</>
+                            ) : (
+                              <>🌐 Public</>
+                            )}
+                          </button>
+                          
+                          {/* Premium Toggle */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePremiumToggle(meme);
+                            }}
+                            className={`inline-flex items-center justify-center px-3 py-2 rounded-full text-xs font-bold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 ${
+                              meme.isPremium 
+                                ? 'bg-purple-500 hover:bg-purple-600 text-white' 
+                                : 'bg-yellow-500 hover:bg-yellow-600 text-white'
+                            }`}
+                            title={meme.isPremium ? 'Edit Premium' : 'Make Premium'}
+                          >
+                            {meme.isPremium ? <>💎 Edit</> : <>💎 Premium</>}
+                          </button>
+                        </div>
                       </div>
                     </div>
                     
@@ -497,6 +538,21 @@ const UserProfilePage: React.FC = () => {
                           </div>
                         </div>
                       </div>
+                      
+                      {/* Premium Info */}
+                      {meme.isPremium && (
+                        <div className="mt-3 pt-3 border-t border-gray-100">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-yellow-600 font-medium">💎 Premium</span>
+                            <span className="text-green-600 font-bold">${meme.price}</span>
+                          </div>
+                          {meme.soldCount && meme.soldCount > 0 && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              Sold: {meme.soldCount} • Earnings: ${meme.totalEarnings?.toFixed(2) || '0.00'}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -505,6 +561,26 @@ const UserProfilePage: React.FC = () => {
           </div>
         </div>
       </PageLayout>
+      
+      {/* Premium Meme Dialog */}
+      {selectedMeme && (
+        <PremiumMemeDialog
+          isOpen={premiumDialogOpen}
+          onClose={() => {
+            setPremiumDialogOpen(false);
+            setSelectedMeme(null);
+          }}
+          meme={{
+            _id: selectedMeme._id,
+            url: selectedMeme.url,
+            title: selectedMeme.title,
+            prompt: selectedMeme.prompt,
+            isPremium: selectedMeme.isPremium,
+            price: selectedMeme.price,
+            memeType: selectedMeme.style ? 'GeneratedImage' : 'Meme'
+          }}
+        />
+      )}
     </div>
   );
 };

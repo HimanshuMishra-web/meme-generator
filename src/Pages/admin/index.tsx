@@ -4,10 +4,11 @@ import AdminSidebar from './AdminSidebar';
 import UserManagement from './UserManagement';
 import MemeTemplateManagement from './MemeTemplateManagement';
 import TestimonialManagement from './TestimonialManagement';
+import PlatformSettings from './PlatformSettings';
 
 const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
-  const [activeSection, setActiveSection] = useState<'dashboard' | 'users' | 'templates' | 'testimonials'>('dashboard');
+  const [activeSection, setActiveSection] = useState<'dashboard' | 'users' | 'templates' | 'testimonials' | 'settings'>('dashboard');
 
   // Check if user is admin or super admin
   if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
@@ -29,6 +30,8 @@ const AdminDashboard: React.FC = () => {
         return <MemeTemplateManagement />;
       case 'testimonials':
         return <TestimonialManagement />;
+      case 'settings':
+        return <PlatformSettings />;
       default:
         return (
           <div className="p-6">
@@ -80,6 +83,20 @@ const AdminDashboard: React.FC = () => {
                 </div>
               </div>
 
+              {/* Platform Settings Card - Only for Super Admins */}
+              {user.role === 'super_admin' && (
+                <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                  <h2 className="text-xl font-semibold text-gray-800 mb-4">Platform Settings</h2>
+                  <p className="text-gray-600 mb-4">Configure commission rates and pricing limits for premium memes.</p>
+                  <button 
+                    onClick={() => setActiveSection('settings')}
+                    className="bg-purple-400 hover:bg-purple-500 text-white font-semibold px-4 py-2 rounded-full transition"
+                  >
+                    Manage Settings
+                  </button>
+                </div>
+              )}
+
               {/* Role Information Card */}
               <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
                 <h2 className="text-xl font-semibold text-gray-800 mb-4">Your Role</h2>
@@ -93,7 +110,7 @@ const AdminDashboard: React.FC = () => {
                   </div>
                   <p className="text-sm text-gray-600">
                     {user.role === 'super_admin' 
-                      ? 'You have full access to all admin features including user management and template status control.'
+                      ? 'You have full access to all admin features including user management, template status control, and platform settings.'
                       : 'You can manage templates and view system statistics.'
                     }
                   </p>
