@@ -17,6 +17,7 @@ interface AuthContextType {
   signUp: (username: string, email: string, password: string) => Promise<boolean>;
   signOut: () => void;
   handleAuthError: (error: any) => void;
+  refreshToken: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -49,6 +50,18 @@ async function signupApi(username: string, email: string, password: string) {
   return res.json();
 }
 
+async function refreshTokenApi(token: string) {
+  const res = await fetch(`${API_URL}/auth/refresh-token`, {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+  });
+  if (!res.ok) throw new Error('Token refresh failed');
+  return res.json();
+}
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -62,6 +75,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(user);
       setToken(token);
       setIsAuthenticated(true);
+      
+      // Check if token is about to expire (within 1 hour)
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const expirationTime = payload.exp * 1000; // Convert to milliseconds
+        const currentTime = Date.now();
+        const oneHour = 60 * 60 * 1000; // 1 hour in milliseconds
+        
+        if (expirationTime - currentTime < oneHour) {
+          // Token expires soon, refresh it
+          refreshToken();
+        }
+      } catch (error) {
+        console.error('Error parsing token:', error);
+      }
     }
   }, []);
 
@@ -78,6 +106,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signupMutation = useMutation({
     mutationFn: ({ username, email, password }: { username: string; email: string; password: string }) => signupApi(username, email, password),
+    onSuccess: (data) => {
+      const { user, token } = data.data;
+      setUser(user);
+      setToken(token);
+      setIsAuthenticated(true);
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({ user, token }));
+    },
+  });
+
+  const refreshTokenMutation = useMutation({
+    mutationFn: ({ token }: { token: string }) => refreshTokenApi(token),
     onSuccess: (data) => {
       const { user, token } = data.data;
       setUser(user);
@@ -114,6 +153,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     window.location.href = '/'; // Redirect to home page
   };
 
+  const refreshToken = async () => {
+    if (!token) return false;
+    try {
+      await refreshTokenMutation.mutateAsync({ token });
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   const handleAuthError = (error: any) => {
     if (error.response?.status === 401) {
       signOut();
@@ -124,7 +173,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, token, signIn, signUp, signOut, handleAuthError }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, token, signIn, signUp, signOut, handleAuthError, refreshToken }}>
       {children}
     </AuthContext.Provider>
   );

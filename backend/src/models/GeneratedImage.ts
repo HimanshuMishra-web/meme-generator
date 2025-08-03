@@ -18,6 +18,11 @@ export interface IGeneratedImage extends Document {
   commission?: number;
   soldCount?: number;
   totalEarnings?: number;
+  // Publication approval fields
+  publicationStatus: 'private' | 'pending' | 'approved' | 'rejected';
+  reviewedBy?: Types.ObjectId;
+  reviewedAt?: Date;
+  rejectionReason?: string;
 }
 
 const GeneratedImageSchema: Schema = new Schema({
@@ -36,6 +41,15 @@ const GeneratedImageSchema: Schema = new Schema({
   commission: { type: Number, min: 0, default: 0 },
   soldCount: { type: Number, default: 0 },
   totalEarnings: { type: Number, default: 0 },
+  // Publication approval fields
+  publicationStatus: { 
+    type: String, 
+    enum: ['private', 'pending', 'approved', 'rejected'], 
+    default: 'private' 
+  },
+  reviewedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+  reviewedAt: { type: Date },
+  rejectionReason: { type: String, maxlength: 500 }
 });
 
 // Virtual fields for like and review counts

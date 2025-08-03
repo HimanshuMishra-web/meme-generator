@@ -19,7 +19,7 @@ export const login = async (req: Request, res: Response) => {
     role: user.role,
     permissions: user.permissions,
   };
-  const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "24h" });
+  const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
   res.json(success({ message: "Login Successful", data: { user, token } }));
 };
 
@@ -36,12 +36,12 @@ export const signup = async (req: Request, res: Response) => {
       role: user.role,
       permissions: user.permissions,
     };
-    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "24h" });
-    res
-      .status(201)
-      .json(
-        success({ message: "Sign Up Successfully", data: { user, token } })
-      );
+        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
+  res
+    .status(201)
+    .json(
+      success({ message: "Sign Up Successfully", data: { user, token } })
+    );
   } catch (err) {
     res.status(500).json({ message: "Error signing up", error: err });
   }
@@ -134,4 +134,37 @@ export const resetPassword = async (req: Request, res: Response) => {
   await Token.deleteMany({ user: user._id }); // Remove all tokens after reset
 
   res.json({ message: "Password has been reset successfully." });
+};
+
+export const refreshToken = async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: "No token provided" });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    
+    // Get fresh user data
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    // Generate new token
+    const payload = {
+      id: user._id,
+      role: user.role,
+      permissions: user.permissions,
+    };
+    const newToken = jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
+    
+    res.json(success({ 
+      message: "Token refreshed successfully", 
+      data: { user, token: newToken } 
+    }));
+  } catch (err) {
+    res.status(401).json({ message: "Invalid token" });
+  }
 };

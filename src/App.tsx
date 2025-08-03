@@ -9,6 +9,10 @@ import CommunityPage from './Pages/CommunityPage';
 import UserMemesPage from './Pages/UserMemesPage';
 import PremiumMemesPage from './Pages/PremiumMemesPage';
 import PurchasedMemesPage from './Pages/PurchasedMemesPage';
+import ContactPage from './Pages/ContactPage';
+import SupportPage from './Pages/SupportPage';
+import PrivacyPage from './Pages/PrivacyPage';
+import UserTicketsPage from './Pages/UserTicketsPage';
 import Navbar from './components/Navbar';
 import { AuthProvider, useAuth } from './components/AuthContext';
 import SignInPage from './Pages/SignInPage';
@@ -29,7 +33,14 @@ const AppContent: React.FC = () => {
       { label: 'Explore', to: '/memes' },
       { label: 'Premium', to: '/premium' },
       { label: 'Community', to: '/community' },
+      { label: 'Support', to: '/support' },
+      { label: 'Contact', to: '/contact' },
     ];
+
+    // Add My Tickets link if user is authenticated
+    if (isAuthenticated) {
+      baseLinks.push({ label: 'My Tickets', to: '/my-tickets' });
+    }
 
     // Add admin link if user is admin or super admin
     if (isAuthenticated && (user?.role === 'admin' || user?.role === 'super_admin')) {
@@ -71,6 +82,10 @@ const AppContent: React.FC = () => {
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/forgot-password" element={<ForgetPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+                  <Route path="/contact" element={<ContactPage />} />
+          <Route path="/support" element={<SupportPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/my-tickets" element={<UserTicketsPage />} />
         <Route path="/admin" element={<AdminDashboard />} />
       </Routes>
     </>

@@ -389,9 +389,9 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold text-white mb-4">Support</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacy</a></li>
+                <li><Link to="/support" className="hover:text-white transition-colors">Support Center</Link></li>
+                <li><Link to="/contact" className="hover:text-white transition-colors">Contact</Link></li>
+                <li><Link to="/privacy" className="hover:text-white transition-colors">Privacy</Link></li>
               </ul>
             </div>
           </div>

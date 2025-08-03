@@ -17,8 +17,8 @@ class ApiService {
       const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
       
       if (response.status === 401) {
-        // Trigger logout on unauthorized
-        this.handleUnauthorized();
+        // Try to refresh token on unauthorized
+        await this.handleUnauthorized();
         throw new Error('Unauthorized - Please log in again');
       }
       
@@ -30,11 +30,33 @@ class ApiService {
     return data.data || data;
   }
 
-  private handleUnauthorized() {
-    // Clear auth data from localStorage
-    localStorage.removeItem('meme-app-auth');
+  private async handleUnauthorized() {
+    // Try to refresh the token first
+    const auth = localStorage.getItem('meme-app-auth');
+    if (auth) {
+      const { token } = JSON.parse(auth);
+      try {
+        const response = await fetch(`${this.baseURL}/auth/refresh-token`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const { user, token: newToken } = data.data;
+          localStorage.setItem('meme-app-auth', JSON.stringify({ user, token: newToken }));
+          return; // Token refreshed successfully, don't redirect
+        }
+      } catch (error) {
+        console.error('Token refresh failed:', error);
+      }
+    }
     
-    // Redirect to login page
+    // If refresh failed, clear auth data and redirect
+    localStorage.removeItem('meme-app-auth');
     window.location.href = '/signin';
   }
 

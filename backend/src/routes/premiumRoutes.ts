@@ -7,7 +7,11 @@ import {
   getPremiumMemes,
   purchasePremiumMeme,
   getPurchasedMemes,
-  getCreatorEarnings
+  getCreatorEarnings,
+  getPendingMemes,
+  reviewMeme,
+  getReviewStats,
+  getAllMemes
 } from '../controllers/premiumController';
 
 const router = express.Router();
@@ -27,5 +31,11 @@ router.put('/meme/premium', setPremiumMeme as express.RequestHandler);
 router.post('/meme/purchase', purchasePremiumMeme as express.RequestHandler);
 router.get('/purchased', getPurchasedMemes as express.RequestHandler);
 router.get('/earnings', getCreatorEarnings as express.RequestHandler);
+
+// Admin routes for meme review
+router.get('/admin/pending', getPendingMemes as express.RequestHandler);
+router.post('/admin/review', reviewMeme as express.RequestHandler);
+router.get('/admin/stats', getReviewStats as express.RequestHandler);
+router.get('/admin/all-memes', getAllMemes as express.RequestHandler);
 
 export default router; 

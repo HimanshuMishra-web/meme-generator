@@ -38,6 +38,9 @@ interface Meme {
   price?: number;
   soldCount?: number;
   totalEarnings?: number;
+  // Publication approval fields
+  publicationStatus?: 'private' | 'pending' | 'approved' | 'rejected';
+  rejectionReason?: string;
 }
 
 const UserProfilePage: React.FC = () => {
@@ -88,8 +91,17 @@ const UserProfilePage: React.FC = () => {
       const endpoint = isGenerated ? `/images/generated/${memeId}/privacy` : `/images/meme/${memeId}/privacy`;
       return await apiService.put(endpoint, { is_public: isPublic }, token ?? undefined);
     },
-    onSuccess: (data, variables) => {
-      toast.success(`Meme ${variables.isPublic ? 'made public' : 'made private'} successfully!`);
+    onSuccess: (data: any, variables) => {
+      if (variables.isPublic) {
+        // Check if the response indicates pending approval
+        if (data?.status === 'pending_approval') {
+          toast.success('Meme submitted for public publication. It will be reviewed by an admin before being made public.');
+        } else {
+          toast.success('Meme made public successfully!');
+        }
+      } else {
+        toast.success('Meme made private successfully!');
+      }
       refetchMemes();
       queryClient.invalidateQueries({ queryKey: ['my-profile'] });
     },
@@ -151,11 +163,22 @@ const UserProfilePage: React.FC = () => {
 
   const handlePrivacyToggle = (meme: Meme) => {
     const isGenerated = !!(meme.style || meme.modelUsed); // Check if it's a generated image
-    updatePrivacyMutation.mutate({
-      memeId: meme._id,
-      isPublic: !meme.is_public,
-      isGenerated
-    });
+    
+    if (!meme.is_public) {
+      // User wants to make meme public - this will now require admin approval
+      updatePrivacyMutation.mutate({
+        memeId: meme._id,
+        isPublic: true,
+        isGenerated
+      });
+    } else {
+      // User wants to make meme private - no approval needed
+      updatePrivacyMutation.mutate({
+        memeId: meme._id,
+        isPublic: false,
+        isGenerated
+      });
+    }
   };
 
   const handlePremiumToggle = (meme: Meme) => {
@@ -458,9 +481,17 @@ const UserProfilePage: React.FC = () => {
                         
                         {/* Current Status */}
                         <div className="flex items-center">
-                          {meme.is_public ? (
+                          {meme.publicationStatus === 'approved' && meme.is_public ? (
                             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-500 text-white shadow-lg">
                               🌐 Public
+                            </span>
+                          ) : meme.publicationStatus === 'pending' ? (
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-yellow-500 text-white shadow-lg">
+                              ⏳ Pending
+                            </span>
+                          ) : meme.publicationStatus === 'rejected' ? (
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-red-500 text-white shadow-lg">
+                              ❌ Rejected
                             </span>
                           ) : (
                             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gray-600 text-white shadow-lg">
@@ -477,17 +508,27 @@ const UserProfilePage: React.FC = () => {
                               e.stopPropagation();
                               handlePrivacyToggle(meme);
                             }}
-                            disabled={updatePrivacyMutation.isPending}
+                            disabled={updatePrivacyMutation.isPending || meme.publicationStatus === 'pending'}
                             className={`inline-flex items-center justify-center px-3 py-2 rounded-full text-xs font-bold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
-                              meme.is_public 
+                              meme.publicationStatus === 'approved' && meme.is_public
                                 ? 'bg-orange-500 hover:bg-orange-600 text-white' 
+                                : meme.publicationStatus === 'pending'
+                                ? 'bg-gray-400 text-white cursor-not-allowed'
                                 : 'bg-blue-500 hover:bg-blue-600 text-white'
                             }`}
-                            title={meme.is_public ? 'Make Private' : 'Make Public'}
+                            title={
+                              meme.publicationStatus === 'pending' 
+                                ? 'Pending admin review' 
+                                : meme.publicationStatus === 'approved' && meme.is_public
+                                ? 'Make Private' 
+                                : 'Make Public'
+                            }
                           >
                             {updatePrivacyMutation.isPending ? (
                               <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
-                            ) : meme.is_public ? (
+                            ) : meme.publicationStatus === 'pending' ? (
+                              <>⏳ Pending</>
+                            ) : meme.publicationStatus === 'approved' && meme.is_public ? (
                               <>🔒 Private</>
                             ) : (
                               <>🌐 Public</>
@@ -523,15 +564,19 @@ const UserProfilePage: React.FC = () => {
                           {meme.style ? `AI Generated • ${meme.style}` : 'Custom Creation'}
                         </span>
                         <div className="flex items-center gap-3 text-xs">
-                          {meme.is_public && (
+                          {meme.publicationStatus === 'approved' && meme.is_public && (
                             <>
                               <span className="text-red-500">❤️ {meme.likeCount || 0}</span>
                               <span className="text-blue-500">💬 {meme.reviewCount || 0}</span>
                             </>
                           )}
                           <div className="flex items-center gap-1">
-                            {meme.is_public ? (
+                            {meme.publicationStatus === 'approved' && meme.is_public ? (
                               <span className="text-xs text-green-600 font-medium">Public</span>
+                            ) : meme.publicationStatus === 'pending' ? (
+                              <span className="text-xs text-yellow-600 font-medium">Pending Review</span>
+                            ) : meme.publicationStatus === 'rejected' ? (
+                              <span className="text-xs text-red-600 font-medium">Rejected</span>
                             ) : (
                               <span className="text-xs text-gray-400">Private</span>
                             )}

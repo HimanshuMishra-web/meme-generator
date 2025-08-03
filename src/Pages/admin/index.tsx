@@ -5,10 +5,14 @@ import UserManagement from './UserManagement';
 import MemeTemplateManagement from './MemeTemplateManagement';
 import TestimonialManagement from './TestimonialManagement';
 import PlatformSettings from './PlatformSettings';
+import MemeReviewManagement from './MemeReviewManagement';
+import AnalyticsDashboard from './AnalyticsDashboard';
+import ContactManagement from './ContactManagement';
+import SupportManagement from './SupportManagement';
 
 const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
-  const [activeSection, setActiveSection] = useState<'dashboard' | 'users' | 'templates' | 'testimonials' | 'settings'>('dashboard');
+  const [activeSection, setActiveSection] = useState<'dashboard' | 'analytics' | 'users' | 'templates' | 'testimonials' | 'settings' | 'meme-review' | 'contact' | 'support'>('dashboard');
 
   // Check if user is admin or super admin
   if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
@@ -24,6 +28,8 @@ const AdminDashboard: React.FC = () => {
 
   const renderContent = () => {
     switch (activeSection) {
+      case 'analytics':
+        return <AnalyticsDashboard />;
       case 'users':
         return <UserManagement />;
       case 'templates':
@@ -32,6 +38,12 @@ const AdminDashboard: React.FC = () => {
         return <TestimonialManagement />;
       case 'settings':
         return <PlatformSettings />;
+      case 'meme-review':
+        return <MemeReviewManagement />;
+      case 'contact':
+        return <ContactManagement />;
+      case 'support':
+        return <SupportManagement />;
       default:
         return (
           <div className="p-6">
@@ -51,6 +63,30 @@ const AdminDashboard: React.FC = () => {
                   </button>
                 </div>
               )}
+
+              {/* Analytics Dashboard Card */}
+              <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">Analytics Dashboard</h2>
+                <p className="text-gray-600 mb-4">View comprehensive analytics, revenue data, and user statistics.</p>
+                <button 
+                  onClick={() => setActiveSection('analytics')}
+                  className="bg-green-500 hover:bg-green-600 text-white font-semibold px-4 py-2 rounded-full transition"
+                >
+                  View Analytics
+                </button>
+              </div>
+
+              {/* Meme Review Management Card */}
+              <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">Meme Review Management</h2>
+                <p className="text-gray-600 mb-4">Review and approve/reject memes submitted for public publication.</p>
+                <button 
+                  onClick={() => setActiveSection('meme-review')}
+                  className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded-full transition"
+                >
+                  Review Memes
+                </button>
+              </div>
 
               {/* Meme Template Management Card */}
               <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
@@ -83,6 +119,30 @@ const AdminDashboard: React.FC = () => {
                 </div>
               </div>
 
+              {/* Contact Management Card */}
+              <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">Contact Management</h2>
+                <p className="text-gray-600 mb-4">Manage contact enquiries and customer support requests.</p>
+                <button 
+                  onClick={() => setActiveSection('contact')}
+                  className="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold px-4 py-2 rounded-full transition"
+                >
+                  Manage Contacts
+                </button>
+              </div>
+
+              {/* Support Management Card */}
+              <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">Support Management</h2>
+                <p className="text-gray-600 mb-4">Manage support tickets and technical issues.</p>
+                <button 
+                  onClick={() => setActiveSection('support')}
+                  className="bg-teal-500 hover:bg-teal-600 text-white font-semibold px-4 py-2 rounded-full transition"
+                >
+                  Manage Support
+                </button>
+              </div>
+
               {/* Platform Settings Card - Only for Super Admins */}
               {user.role === 'super_admin' && (
                 <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
@@ -110,8 +170,8 @@ const AdminDashboard: React.FC = () => {
                   </div>
                   <p className="text-sm text-gray-600">
                     {user.role === 'super_admin' 
-                      ? 'You have full access to all admin features including user management, template status control, and platform settings.'
-                      : 'You can manage templates and view system statistics.'
+                      ? 'You have full access to all admin features including user management, template status control, platform settings, and meme review.'
+                      : 'You can manage templates, review memes, and view system statistics.'
                     }
                   </p>
                 </div>
@@ -123,10 +183,10 @@ const AdminDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="flex">
+    <div className="h-screen bg-gray-50 overflow-hidden">
+      <div className="flex h-full">
         <AdminSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
-        <div className="flex-1">
+        <div className="flex-1 overflow-auto">
           {renderContent()}
         </div>
       </div>

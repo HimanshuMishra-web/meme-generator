@@ -153,10 +153,12 @@ export const getCommunityMemes = async (req: Request, res: Response) => {
     const publicUserIds = publicUsers.map(user => user._id);
     
     // Get public memes from public users (both GeneratedImages and Memes)
+    // Only show memes that are both public AND approved by admins
     const [generatedImages, savedMemes] = await Promise.all([
       GeneratedImage.find({ 
         user: { $in: publicUserIds },
-        is_public: true  // Only get memes marked as public
+        is_public: true,  // Only get memes marked as public
+        publicationStatus: 'approved'  // Only show approved memes
       })
       .populate('user', 'username profileImage isPublic')
       .populate('likeCount')
@@ -165,7 +167,8 @@ export const getCommunityMemes = async (req: Request, res: Response) => {
       
       Meme.find({ 
         user: { $in: publicUserIds },
-        is_public: true  // Only get memes marked as public
+        is_public: true,  // Only get memes marked as public
+        publicationStatus: 'approved'  // Only show approved memes
       })
       .populate('user', 'username profileImage isPublic')
       .populate('likeCount')
@@ -197,17 +200,19 @@ export const getUserPublicMemes = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'User not found or profile not public' });
     }
     
-    // Get public memes from this user
+    // Get public memes from this user (only approved ones)
     const [generatedImages, savedMemes] = await Promise.all([
       GeneratedImage.find({ 
         user: userId,
-        is_public: true
+        is_public: true,
+        publicationStatus: 'approved'  // Only show approved memes
       })
       .populate('user', 'username profileImage isPublic'),
       
       Meme.find({ 
         user: userId,
-        is_public: true
+        is_public: true,
+        publicationStatus: 'approved'  // Only show approved memes
       })
       .populate('user', 'username profileImage isPublic')
     ]);
@@ -252,14 +257,36 @@ export const updateGeneratedImagePrivacy = async (req: Request, res: Response) =
       return res.status(404).json({ message: 'Generated image not found or access denied' });
     }
 
-    // Update privacy status
-    generatedImage.is_public = is_public;
-    await generatedImage.save();
-
-    res.json({ 
-      message: `Generated image ${is_public ? 'made public' : 'made private'} successfully`,
-      meme: generatedImage 
-    });
+    if (is_public) {
+      // User wants to make generated image public - requires admin approval
+      generatedImage.is_public = false; // Keep it private until approved
+      generatedImage.publicationStatus = 'pending';
+      generatedImage.reviewedBy = undefined;
+      generatedImage.reviewedAt = undefined;
+      generatedImage.rejectionReason = undefined;
+      
+      await generatedImage.save();
+      
+      res.json({ 
+        message: 'Generated image submitted for public publication. It will be reviewed by an admin before being made public.',
+        meme: generatedImage,
+        status: 'pending_approval'
+      });
+    } else {
+      // User wants to make generated image private - no approval needed
+      generatedImage.is_public = false;
+      generatedImage.publicationStatus = 'private';
+      generatedImage.reviewedBy = undefined;
+      generatedImage.reviewedAt = undefined;
+      generatedImage.rejectionReason = undefined;
+      
+      await generatedImage.save();
+      
+      res.json({ 
+        message: 'Generated image made private successfully',
+        meme: generatedImage 
+      });
+    }
   } catch (error) {
     res.status(500).json({ message: 'Failed to update generated image privacy', error });
   }
@@ -286,14 +313,36 @@ export const updateMemePrivacy = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Meme not found or access denied' });
     }
 
-    // Update privacy status
-    meme.is_public = is_public;
-    await meme.save();
-
-    res.json({ 
-      message: `Meme ${is_public ? 'made public' : 'made private'} successfully`,
-      meme: meme 
-    });
+    if (is_public) {
+      // User wants to make meme public - requires admin approval
+      meme.is_public = false; // Keep it private until approved
+      meme.publicationStatus = 'pending';
+      meme.reviewedBy = undefined;
+      meme.reviewedAt = undefined;
+      meme.rejectionReason = undefined;
+      
+      await meme.save();
+      
+      res.json({ 
+        message: 'Meme submitted for public publication. It will be reviewed by an admin before being made public.',
+        meme: meme,
+        status: 'pending_approval'
+      });
+    } else {
+      // User wants to make meme private - no approval needed
+      meme.is_public = false;
+      meme.publicationStatus = 'private';
+      meme.reviewedBy = undefined;
+      meme.reviewedAt = undefined;
+      meme.rejectionReason = undefined;
+      
+      await meme.save();
+      
+      res.json({ 
+        message: 'Meme made private successfully',
+        meme: meme 
+      });
+    }
   } catch (error) {
     res.status(500).json({ message: 'Failed to update meme privacy', error });
   }
