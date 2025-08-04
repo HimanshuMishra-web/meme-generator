@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import * as jwt from 'jsonwebtoken';
 
 interface JwtUserPayload {
   id: string;
@@ -7,7 +7,15 @@ interface JwtUserPayload {
   permissions: any;
 }
 
-export function authMiddleware(req: Request, res: Response, next: NextFunction) {
+interface AuthenticatedRequest extends Request {
+  user?: {
+    id: string;
+    role: string;
+    permissions: any;
+  };
+}
+
+export function authMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
   console.log('Auth header:', authHeader); // Debug log
   
@@ -36,7 +44,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
 }
 
 // Super Admin middleware
-export function requireSuperAdmin(req: Request, res: Response, next: NextFunction): void {
+export function requireSuperAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction): void {
   if (req.user?.role !== 'super_admin') {
     res.status(403).json({ message: 'Forbidden: Super Admin access required.' });
     return;
@@ -45,7 +53,7 @@ export function requireSuperAdmin(req: Request, res: Response, next: NextFunctio
 }
 
 // Admin or Super Admin middleware
-export function requireAdminOrSuperAdmin(req: Request, res: Response, next: NextFunction): void {
+export function requireAdminOrSuperAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction): void {
   if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
     res.status(403).json({ message: 'Forbidden: Admin or Super Admin access required.' });
     return;

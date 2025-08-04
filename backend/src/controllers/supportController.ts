@@ -2,11 +2,20 @@ import { Request, Response } from 'express';
 import Support from '../models/Support';
 import User from '../models/User';
 
+interface AuthenticatedRequest extends Request {
+  user?: {
+    id: string;
+    role: string;
+    permissions: any;
+  };
+}
+
 // Create a new support ticket
-export const createSupport = async (req: Request, res: Response) => {
+export const createSupport = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { subject, description, category } = req.body;
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
+    const files = req.files as Express.Multer.File[];
 
     if (!userId) {
       res.status(401).json({ message: 'Authentication required' });
@@ -18,11 +27,22 @@ export const createSupport = async (req: Request, res: Response) => {
       return;
     }
 
+    // Process uploaded files
+    const attachments: string[] = [];
+    if (files && files.length > 0) {
+      files.forEach(file => {
+        // Create the URL path for the uploaded file
+        const fileUrl = `/assets/support-attachments/${file.filename}`;
+        attachments.push(fileUrl);
+      });
+    }
+
     const support = new Support({
       user: userId,
       subject,
       description,
-      category: category || 'general'
+      category: category || 'general',
+      attachments: attachments.length > 0 ? attachments : undefined
     });
 
     await support.save();
@@ -70,9 +90,9 @@ export const getAllSupport = async (req: Request, res: Response) => {
 };
 
 // Get user's own support tickets
-export const getUserSupport = async (req: Request, res: Response) => {
+export const getUserSupport = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
     const { page = 1, limit = 10, status } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
 

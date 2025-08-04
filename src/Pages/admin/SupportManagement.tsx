@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { apiService } from '../../services/axiosInstance';
 import { format } from 'date-fns';
+import { ASSETS_URL } from '../../../constants';
 
 interface Support {
   _id: string;
@@ -327,7 +328,14 @@ export default function SupportManagement() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900 max-w-xs truncate">{ticket.subject}</div>
+                      <div className="text-sm text-gray-900 max-w-xs truncate">
+                        {ticket.subject}
+                        {ticket.attachments && ticket.attachments.length > 0 && (
+                          <span className="ml-2 text-blue-600" title={`${ticket.attachments.length} attachment(s)`}>
+                            📎
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getCategoryColor(ticket.category)}`}>
@@ -541,6 +549,38 @@ export default function SupportManagement() {
                     </select>
                   </div>
                 </div>
+
+                {/* Attachments Section */}
+                {selectedSupport.attachments && selectedSupport.attachments.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Attachments</label>
+                    <div className="space-y-2">
+                      {selectedSupport.attachments.map((attachment, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <span className="text-lg">📎</span>
+                            <div className="flex flex-col">
+                              <span className="text-sm text-gray-700">
+                                Attachment {index + 1}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {attachment.split('/').pop()}
+                              </span>
+                            </div>
+                          </div>
+                          <a
+                            href={`${ASSETS_URL}${attachment}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                          >
+                            View
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>

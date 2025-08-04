@@ -1,0 +1,10 @@
+[33m4a55d0c[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m feat: implement premium features and enhance meme generator functionality
+[33m20c19c7[m Added Premium Memes With Platform Commission Settings
+[33mfa3e7a1[m feat: Major feature enhancements and UI improvements
+[33mc4f1268[m Added screenshots
+[33m2bf1e74[m feat: Add community features, password reset, and user profile enhancements
+[33m74e88f3[m Backend: - Added getMyMemes controller to fetch memes created by the authenticated user in imageController.ts - Updated userController.ts and userRoutes.ts for improved user-related endpoints - Updated imageRoutes.ts to include new meme-related routes
+[33m9227e5c[m feat: Add reusable confirmation dialog and integrate for all delete actions in admin panel (users, testimonials, templates)
+[33mdc5d3a1[m Separate user-created memes from AI-generated images: add Meme model, update saveToCollection to use memes collection, and store meme images in assets/memes/{userId}/. Also add react-hot-toast for user feedback.
+[33m289a5bb[m feat: enhance user management system with comprehensive features
+[33m55eaf01[m feat: add media management system and admin interface

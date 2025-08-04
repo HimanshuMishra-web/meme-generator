@@ -10,10 +10,12 @@ interface SupportFormData {
   subject: string;
   description: string;
   category: 'technical' | 'billing' | 'feature_request' | 'bug_report' | 'general';
+  attachments?: File[];
 }
 
 export default function SupportPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [attachments, setAttachments] = useState<File[]>([]);
   const { user, isAuthenticated } = useAuth();
   
   const {
@@ -27,6 +29,15 @@ export default function SupportPage() {
     }
   });
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    setAttachments(prev => [...prev, ...files]);
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
   const onSubmit = async (data: SupportFormData) => {
     if (!isAuthenticated) {
       toast.error('Please sign in to submit a support ticket');
@@ -35,9 +46,20 @@ export default function SupportPage() {
 
     setIsSubmitting(true);
     try {
-      await apiService.post('/support', data);
+      const formData = new FormData();
+      formData.append('subject', data.subject);
+      formData.append('description', data.description);
+      formData.append('category', data.category);
+      
+      // Add attachments
+      attachments.forEach((file, index) => {
+        formData.append('attachments', file);
+      });
+
+      await apiService.post('/support', formData);
       toast.success('Support ticket created successfully! We\'ll get back to you soon.');
       reset();
+      setAttachments([]);
     } catch (error) {
       console.error('Error submitting support ticket:', error);
       toast.error('Failed to create support ticket. Please try again.');
@@ -264,6 +286,59 @@ export default function SupportPage() {
                     />
                     {errors.description && (
                       <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="attachments" className="block text-sm font-semibold text-gray-700 mb-2">
+                      Attachments (Optional)
+                    </label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-purple-400 transition-colors">
+                      <input
+                        type="file"
+                        id="attachments"
+                        multiple
+                        accept="image/*,.pdf,.txt,.log,.doc,.docx"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+                      <label htmlFor="attachments" className="cursor-pointer">
+                        <div className="text-4xl mb-2">📎</div>
+                        <p className="text-gray-600 mb-1">
+                          <span className="text-purple-600 font-semibold">Click to upload</span> or drag and drop
+                        </p>
+                        <p className="text-gray-500 text-sm">
+                          Screenshots, logs, documents (Max 5 files, 10MB each)
+                        </p>
+                      </label>
+                    </div>
+                    
+                    {attachments.length > 0 && (
+                      <div className="mt-4 space-y-2">
+                        <p className="text-sm font-medium text-gray-700">Selected files:</p>
+                        {attachments.map((file, index) => (
+                          <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                📄
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-gray-900">{file.name}</p>
+                                <p className="text-xs text-gray-500">
+                                  {(file.size / 1024 / 1024).toFixed(2)} MB
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeAttachment(index)}
+                              className="text-red-500 hover:text-red-700 p-1"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </div>
 

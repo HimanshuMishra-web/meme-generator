@@ -37,10 +37,7 @@ const AppContent: React.FC = () => {
       { label: 'Contact', to: '/contact' },
     ];
 
-    // Add My Tickets link if user is authenticated
-    if (isAuthenticated) {
-      baseLinks.push({ label: 'My Tickets', to: '/my-tickets' });
-    }
+    // My Tickets link has been moved to the user menu
 
     // Add admin link if user is admin or super admin
     if (isAuthenticated && (user?.role === 'admin' || user?.role === 'super_admin')) {

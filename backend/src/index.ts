@@ -32,6 +32,7 @@ app.use(express.json());
 // Serve static files from assets directory
 app.use('/assets', express.static(path.join(__dirname, '../assets')));
 app.use('/assets/media', express.static(path.join(__dirname, '../assets/media')));
+app.use('/assets/support-attachments', express.static(path.join(__dirname, '../assets/support-attachments')));
 
 app.get('/', (req, res) => {
   res.send('Meme Generator Backend is running!');
