@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { apiService } from '../../services/axiosInstance';
 import { format } from 'date-fns';
 import { ASSETS_URL } from '../../../constants';
+import ConfirmDialog from '../../components/ConfirmDialog';
 
 interface Support {
   _id: string;
@@ -46,6 +47,8 @@ interface SupportStats {
 export default function SupportManagement() {
   const [selectedSupport, setSelectedSupport] = useState<Support | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [supportToDelete, setSupportToDelete] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     status: '',
     priority: '',
@@ -115,9 +118,21 @@ export default function SupportManagement() {
   };
 
   const handleDeleteSupport = (id: string) => {
-    if (confirm('Are you sure you want to delete this support ticket?')) {
-      deleteSupportMutation.mutate(id);
+    setSupportToDelete(id);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDeleteSupport = () => {
+    if (supportToDelete) {
+      deleteSupportMutation.mutate(supportToDelete);
+      setShowDeleteDialog(false);
+      setSupportToDelete(null);
     }
+  };
+
+  const cancelDeleteSupport = () => {
+    setShowDeleteDialog(false);
+    setSupportToDelete(null);
   };
 
   const getStatusColor = (status: string) => {
@@ -293,41 +308,41 @@ export default function SupportManagement() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-4 text-center">
+                  <td colSpan={7} className="px-4 py-3 text-center">
                     <div className="flex items-center justify-center">
-                      <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                      <span className="ml-2">Loading...</span>
+                      <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                      <span className="ml-2 text-sm">Loading...</span>
                     </div>
                   </td>
                 </tr>
               ) : support.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan={7} className="px-4 py-3 text-center text-gray-500 text-sm">
                     No support tickets found
                   </td>
                 </tr>
               ) : (
                 support.map((ticket: Support) => (
                   <tr key={ticket._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-2">
                       <div>
                         <div className="text-sm font-medium text-gray-900">{ticket.user.name}</div>
-                        <div className="text-sm text-gray-500">{ticket.user.email}</div>
+                        <div className="text-xs text-gray-500">{ticket.user.email}</div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-2">
                       <div className="text-sm text-gray-900 max-w-xs truncate">
                         {ticket.subject}
                         {ticket.attachments && ticket.attachments.length > 0 && (
@@ -337,39 +352,46 @@ export default function SupportManagement() {
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getCategoryColor(ticket.category)}`}>
+                    <td className="px-4 py-2">
+                      <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${getCategoryColor(ticket.category)}`}>
                         {ticket.category.replace('_', ' ')}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(ticket.status)}`}>
+                    <td className="px-4 py-2">
+                      <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(ticket.status)}`}>
                         {ticket.status.replace('_', ' ')}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(ticket.priority)}`}>
+                    <td className="px-4 py-2">
+                      <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${getPriorityColor(ticket.priority)}`}>
                         {ticket.priority}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
+                    <td className="px-4 py-2 text-xs text-gray-500">
                       {format(new Date(ticket.createdAt), 'MMM dd, yyyy')}
                     </td>
-                    <td className="px-6 py-4 text-sm font-medium">
+                    <td className="px-4 py-2 text-sm font-medium">
                       <button
                         onClick={() => {
                           setSelectedSupport(ticket);
                           setShowDetails(true);
                         }}
-                        className="text-blue-600 hover:text-blue-900 mr-3"
+                        className="text-blue-600 hover:text-blue-900 mr-2 p-1 rounded hover:bg-blue-50 transition-colors"
+                        title="View Details"
                       >
-                        View
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
                       </button>
                       <button
                         onClick={() => handleDeleteSupport(ticket._id)}
-                        className="text-red-600 hover:text-red-900"
+                        className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors"
+                        title="Delete Support Ticket"
                       >
-                        Delete
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
                       </button>
                     </td>
                   </tr>
@@ -613,6 +635,17 @@ export default function SupportManagement() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={showDeleteDialog}
+        title="Delete Support Ticket"
+        description="Are you sure you want to delete this support ticket? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={confirmDeleteSupport}
+        onCancel={cancelDeleteSupport}
+      />
     </div>
   );
 } 

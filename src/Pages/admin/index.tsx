@@ -9,10 +9,11 @@ import MemeReviewManagement from './MemeReviewManagement';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import ContactManagement from './ContactManagement';
 import SupportManagement from './SupportManagement';
+import MemeManagement from './MemeManagement';
 
 const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
-  const [activeSection, setActiveSection] = useState<'dashboard' | 'analytics' | 'users' | 'templates' | 'testimonials' | 'settings' | 'meme-review' | 'contact' | 'support'>('dashboard');
+  const [activeSection, setActiveSection] = useState<'dashboard' | 'analytics' | 'users' | 'templates' | 'testimonials' | 'settings' | 'meme-review' | 'contact' | 'support' | 'meme-management'>('dashboard');
 
   // Check if user is admin or super admin
   if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
@@ -44,6 +45,8 @@ const AdminDashboard: React.FC = () => {
         return <ContactManagement />;
       case 'support':
         return <SupportManagement />;
+      case 'meme-management':
+        return <MemeManagement />;
       default:
         return (
           <div className="p-6">
@@ -60,6 +63,20 @@ const AdminDashboard: React.FC = () => {
                     className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-4 py-2 rounded-full transition"
                   >
                     Manage Users
+                  </button>
+                </div>
+              )}
+
+              {/* Meme Management Card - Only for Super Admins */}
+              {user.role === 'super_admin' && (
+                <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                  <h2 className="text-xl font-semibold text-gray-800 mb-4">Meme Management</h2>
+                  <p className="text-gray-600 mb-4">View and manage all user-created memes and AI-generated images.</p>
+                  <button 
+                    onClick={() => setActiveSection('meme-management')}
+                    className="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold px-4 py-2 rounded-full transition"
+                  >
+                    Manage Memes
                   </button>
                 </div>
               )}

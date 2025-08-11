@@ -484,3 +484,56 @@ export const getAllMemes = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ message: 'Failed to get all memes' });
   }
 }; 
+
+// Activate/deactivate memes for super admin
+export const toggleMemeVisibility = async (req: AuthRequest, res: Response) => {
+  try {
+    const { memeId, memeType, isActive } = req.body;
+    
+    if (!req.user || req.user.role !== 'super_admin') {
+      return res.status(403).json({ message: 'Super admin access required' });
+    }
+    
+    if (typeof isActive !== 'boolean') {
+      return res.status(400).json({ message: 'isActive must be a boolean value' });
+    }
+    
+    let meme;
+    if (memeType === 'GeneratedImage') {
+      meme = await GeneratedImage.findById(memeId);
+    } else {
+      meme = await Meme.findById(memeId);
+    }
+    
+    if (!meme) {
+      return res.status(404).json({ message: 'Meme not found' });
+    }
+    
+    // Update meme visibility
+    meme.is_public = isActive;
+    
+    // Update publication status based on activation
+    if (isActive) {
+      meme.publicationStatus = 'approved';
+      meme.rejectionReason = undefined;
+    } else {
+      meme.publicationStatus = 'private';
+    }
+    
+    meme.reviewedBy = req.user.id as any;
+    meme.reviewedAt = new Date();
+    
+    await meme.save();
+    
+    res.json({ 
+      message: `Meme ${isActive ? 'activated' : 'deactivated'} successfully`,
+      meme: {
+        ...meme.toObject(),
+        memeType
+      }
+    });
+  } catch (error) {
+    console.error('Error toggling meme visibility:', error);
+    res.status(500).json({ message: 'Failed to toggle meme visibility' });
+  }
+}; 

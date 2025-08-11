@@ -11,7 +11,8 @@ import {
   getPendingMemes,
   reviewMeme,
   getReviewStats,
-  getAllMemes
+  getAllMemes,
+  toggleMemeVisibility
 } from '../controllers/premiumController';
 
 const router = express.Router();
@@ -37,5 +38,6 @@ router.get('/admin/pending', getPendingMemes as express.RequestHandler);
 router.post('/admin/review', reviewMeme as express.RequestHandler);
 router.get('/admin/stats', getReviewStats as express.RequestHandler);
 router.get('/admin/all-memes', getAllMemes as express.RequestHandler);
+router.post('/admin/toggle-meme-visibility', authMiddleware, toggleMemeVisibility as express.RequestHandler);
 
 export default router; 

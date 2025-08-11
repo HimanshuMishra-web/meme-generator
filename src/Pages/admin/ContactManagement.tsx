@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { apiService } from '../../services/axiosInstance';
 import { format } from 'date-fns';
+import ConfirmDialog from '../../components/ConfirmDialog';
 
 interface Contact {
   _id: string;
@@ -35,6 +36,8 @@ interface ContactStats {
 export default function ContactManagement() {
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [contactToDelete, setContactToDelete] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     status: '',
     priority: '',
@@ -102,9 +105,21 @@ export default function ContactManagement() {
   };
 
   const handleDeleteContact = (id: string) => {
-    if (confirm('Are you sure you want to delete this contact enquiry?')) {
-      deleteContactMutation.mutate(id);
+    setContactToDelete(id);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDeleteContact = () => {
+    if (contactToDelete) {
+      deleteContactMutation.mutate(contactToDelete);
+      setShowDeleteDialog(false);
+      setContactToDelete(null);
     }
+  };
+
+  const cancelDeleteContact = () => {
+    setShowDeleteDialog(false);
+    setContactToDelete(null);
   };
 
   const getStatusColor = (status: string) => {
@@ -251,70 +266,77 @@ export default function ContactManagement() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center">
+                  <td colSpan={6} className="px-4 py-3 text-center">
                     <div className="flex items-center justify-center">
-                      <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                      <span className="ml-2">Loading...</span>
+                      <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                      <span className="ml-2 text-sm">Loading...</span>
                     </div>
                   </td>
                 </tr>
               ) : contacts.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan={6} className="px-4 py-3 text-center text-gray-500 text-sm">
                     No contact enquiries found
                   </td>
                 </tr>
               ) : (
                 contacts.map((contact: Contact) => (
                   <tr key={contact._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-2">
                       <div>
                         <div className="text-sm font-medium text-gray-900">{contact.name}</div>
-                        <div className="text-sm text-gray-500">{contact.email}</div>
+                        <div className="text-xs text-gray-500">{contact.email}</div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-2">
                       <div className="text-sm text-gray-900 max-w-xs truncate">{contact.subject}</div>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(contact.status)}`}>
+                    <td className="px-4 py-2">
+                      <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(contact.status)}`}>
                         {contact.status.replace('_', ' ')}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(contact.priority)}`}>
+                    <td className="px-4 py-2">
+                      <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${getPriorityColor(contact.priority)}`}>
                         {contact.priority}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
+                    <td className="px-4 py-2 text-xs text-gray-500">
                       {format(new Date(contact.createdAt), 'MMM dd, yyyy')}
                     </td>
-                    <td className="px-6 py-4 text-sm font-medium">
+                    <td className="px-4 py-2 text-sm font-medium">
                       <button
                         onClick={() => {
                           setSelectedContact(contact);
                           setShowDetails(true);
                         }}
-                        className="text-blue-600 hover:text-blue-900 mr-3"
+                        className="text-blue-600 hover:text-blue-900 mr-2 p-1 rounded hover:bg-blue-50 transition-colors"
+                        title="View Details"
                       >
-                        View
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
                       </button>
                       <button
                         onClick={() => handleDeleteContact(contact._id)}
-                        className="text-red-600 hover:text-red-900"
+                        className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors"
+                        title="Delete Contact"
                       >
-                        Delete
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
                       </button>
                     </td>
                   </tr>
@@ -508,6 +530,17 @@ export default function ContactManagement() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={showDeleteDialog}
+        title="Delete Contact Enquiry"
+        description="Are you sure you want to delete this contact enquiry? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={confirmDeleteContact}
+        onCancel={cancelDeleteContact}
+      />
     </div>
   );
 } 
