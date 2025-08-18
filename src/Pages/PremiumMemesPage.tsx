@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { apiService } from '../services/axiosInstance';
 import { useAuth } from '../components/AuthContext';
 import { generateImageSource } from '../utils';
@@ -171,9 +172,10 @@ const PremiumMemesPage: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {premiumMemes.map((meme, index) => (
-                <div 
+                <Link 
                   key={meme._id} 
-                  className="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden"
+                  to={`/memes/${meme._id}`}
+                  className="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden block"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   {/* Premium Badge */}
@@ -226,7 +228,11 @@ const PremiumMemesPage: React.FC = () => {
 
                     {/* Purchase Button */}
                     <button
-                      onClick={() => handlePurchase(meme)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handlePurchase(meme);
+                      }}
                       disabled={purchaseMutation.isPending || meme.user._id === user?._id}
                       className={`w-full py-3 px-4 rounded-xl font-semibold transition-all duration-200 ${
                         meme.user._id === user?._id
@@ -246,7 +252,7 @@ const PremiumMemesPage: React.FC = () => {
                       )}
                     </button>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}

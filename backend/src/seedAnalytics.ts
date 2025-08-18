@@ -138,7 +138,7 @@ const seedAnalyticsData = async () => {
       {
         buyer: users[0]._id,
         seller: users[1]._id,
-        memeId: memes[1]._id.toString(),
+        memeId: (memes[1] as any)._id.toString(),
         memeType: 'Meme',
         price: 5.99,
         commission: 0.60,
@@ -151,7 +151,7 @@ const seedAnalyticsData = async () => {
       {
         buyer: users[0]._id,
         seller: users[1]._id,
-        memeId: memes[1]._id.toString(),
+        memeId: (memes[1] as any)._id.toString(),
         memeType: 'Meme',
         price: 5.99,
         commission: 0.60,
@@ -164,7 +164,7 @@ const seedAnalyticsData = async () => {
       {
         buyer: users[1]._id,
         seller: users[0]._id,
-        memeId: aiImages[1]._id.toString(),
+        memeId: (aiImages[1] as any)._id.toString(),
         memeType: 'GeneratedImage',
         price: 8.99,
         commission: 0.90,
@@ -177,7 +177,7 @@ const seedAnalyticsData = async () => {
       {
         buyer: users[0]._id,
         seller: users[1]._id,
-        memeId: aiImages[1]._id.toString(),
+        memeId: (aiImages[1] as any)._id.toString(),
         memeType: 'GeneratedImage',
         price: 8.99,
         commission: 0.90,

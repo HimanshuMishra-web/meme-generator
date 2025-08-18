@@ -1,5 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { apiService } from '../services/axiosInstance';
 import { useAuth } from '../components/AuthContext';
 import { generateImageSource } from '../utils';
@@ -130,9 +131,10 @@ const PurchasedMemesPage: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {purchasedMemes.map((meme, index) => (
-                <div 
+                <Link 
                   key={meme._id} 
-                  className="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden"
+                  to={`/memes/${meme._id}`}
+                  className="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden block"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   {/* Purchased Badge */}
@@ -185,7 +187,9 @@ const PurchasedMemesPage: React.FC = () => {
 
                     {/* Download Button */}
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                         const link = document.createElement('a');
                         link.href = generateImageSource(meme.url);
                         link.download = `${meme.title || meme.prompt || 'meme'}.png`;
@@ -196,7 +200,7 @@ const PurchasedMemesPage: React.FC = () => {
                       📥 Download
                     </button>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}

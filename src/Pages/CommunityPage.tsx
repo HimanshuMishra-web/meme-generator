@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { apiService } from '../services/axiosInstance';
 import { generateImageSource } from '../utils';
 import PageLayout from '../components/PageLayout';
@@ -139,7 +140,7 @@ const CommunityPage: React.FC = () => {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {memesData.memes.map((meme) => (
-                  <div key={meme._id} className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100 transform hover:-translate-y-2">
+                  <Link key={meme._id} to={`/memes/${meme._id}`} className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100 transform hover:-translate-y-2 block">
                     {/* Meme Image */}
                     <div className="relative overflow-hidden aspect-square">
                       <img 
@@ -151,14 +152,20 @@ const CommunityPage: React.FC = () => {
                       {/* Overlay with actions */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-                          <LikeButton 
-                            memeId={meme._id}
-                            memeType={meme.memeType}
-                            size="sm"
-                            className="bg-white/90 text-gray-800 hover:bg-white"
-                          />
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <LikeButton 
+                              memeId={meme._id}
+                              memeType={meme.memeType}
+                              size="sm"
+                              className="bg-white/90 text-gray-800 hover:bg-white"
+                            />
+                          </div>
                           <button
-                            onClick={() => setSelectedMeme(meme)}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setSelectedMeme(meme);
+                            }}
                             className="bg-white/90 hover:bg-white text-gray-800 px-3 py-1 rounded-full text-sm font-medium transition-colors"
                           >
                             💬 Reviews
@@ -203,7 +210,7 @@ const CommunityPage: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}

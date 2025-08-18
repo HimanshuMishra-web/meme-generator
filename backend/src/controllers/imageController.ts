@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { ImageGeneratorService } from '../services/ImageGeneratorService';
 import GeneratedImage from '../models/GeneratedImage';
 import Meme from '../models/Meme';
+import Like from '../models/Like';
 import path from 'path';
 import fs from 'fs';
 import multer from 'multer';
@@ -345,5 +346,82 @@ export const updateMemePrivacy = async (req: Request, res: Response) => {
     }
   } catch (error) {
     res.status(500).json({ message: 'Failed to update meme privacy', error });
+  }
+};
+
+// Get a single meme by ID (public endpoint)
+export const getMemeById = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id; // Optional - for checking if user liked the meme
+
+    // Try to find the meme in both Meme and GeneratedImage collections
+    let meme = await Meme.findById(id).populate('user', 'username profileImage isPublic');
+    let memeType: 'Meme' | 'GeneratedImage' = 'Meme';
+
+    if (!meme) {
+      meme = await GeneratedImage.findById(id).populate('user', 'username profileImage isPublic');
+      memeType = 'GeneratedImage';
+    }
+
+    if (!meme) {
+      return res.status(404).json({ message: 'Meme not found' });
+    }
+
+    // Check if the meme is public or if the user is the owner
+    if (!meme.is_public && meme.user._id.toString() !== userId) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    // Get like count and review count using virtual fields
+    const likeCount = meme.likeCount || 0;
+    const reviewCount = meme.reviewCount || 0;
+
+    // Check if current user has liked this meme (if authenticated)
+    let isLiked = false;
+    if (userId) {
+      // Check if user has liked this meme by querying the Like collection
+      const like = await Like.findOne({ 
+        user: userId, 
+        meme: meme._id, 
+        memeType: memeType 
+      });
+      isLiked = !!like;
+    }
+
+    // Build response object based on meme type
+    const memeResponse: any = {
+      _id: meme._id,
+      url: meme.url,
+      title: meme.title,
+      description: meme.description,
+      createdAt: meme.createdAt,
+      is_public: meme.is_public,
+      memeType: memeType,
+      likeCount,
+      reviewCount,
+      isLiked,
+      user: {
+        _id: (meme.user as any)._id,
+        username: (meme.user as any).username,
+        profileImage: (meme.user as any).profileImage,
+        isPublic: (meme.user as any).isPublic
+      }
+    };
+
+    // Add GeneratedImage specific fields if it's a generated image
+    if (memeType === 'GeneratedImage') {
+      const generatedImage = meme as any;
+      memeResponse.prompt = generatedImage.prompt;
+      memeResponse.style = generatedImage.style;
+      memeResponse.modelUsed = generatedImage.modelUsed;
+    }
+
+    res.json({
+      meme: memeResponse
+    });
+  } catch (error) {
+    console.error('Error fetching meme by ID:', error);
+    res.status(500).json({ message: 'Failed to fetch meme', error });
   }
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { apiService } from '../services/axiosInstance';
 import { generateImageSource } from '../utils';
@@ -110,7 +110,7 @@ const UserMemesPage: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {memes.map((meme) => (
-                <div key={meme._id} className="group">
+                <Link key={meme._id} to={`/memes/${meme._id}`} className="group block">
                   <MemeCard 
                     src={generateImageSource(meme.url)} 
                     title={meme.prompt || meme.title || 'Untitled Meme'} 
@@ -118,7 +118,7 @@ const UserMemesPage: React.FC = () => {
                   <div className="mt-2 text-xs text-gray-500 text-center">
                     Created {new Date(meme.createdAt).toLocaleDateString()}
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}

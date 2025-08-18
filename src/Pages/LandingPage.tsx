@@ -238,7 +238,7 @@ export default function LandingPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
               {trendingData.memes.map((meme) => (
-                <div key={meme._id} className="group bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100 transform hover:-translate-y-2">
+                <Link key={meme._id} to={`/memes/${meme._id}`} className="group bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100 transform hover:-translate-y-2 block">
                   {/* Trending Badge */}
                   <div className="relative">
                     <div className="absolute top-3 left-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg z-10">
@@ -284,11 +284,13 @@ export default function LandingPage() {
                     )}
                     
                     <div className="flex items-center justify-between">
-                      <LikeButton 
-                        memeId={meme._id}
-                        memeType={meme.memeType}
-                        size="sm"
-                      />
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <LikeButton 
+                          memeId={meme._id}
+                          memeType={meme.memeType}
+                          size="sm"
+                        />
+                      </div>
                       <div className="flex items-center gap-3 text-xs text-gray-500">
                         <span>💬 {meme.reviewCount || 0}</span>
                         <span>
@@ -297,7 +299,7 @@ export default function LandingPage() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}
