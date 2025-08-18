@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { API_URL } from '../../constants';
 
 interface User {
+  _id?: string;
   username: string;
   email: string;
   role?: string;
